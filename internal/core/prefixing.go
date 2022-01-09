@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// An io.Writer that inserts Prefix at the start of each new line written to W.
 type prefixingWriter struct {
 	Prefix string
 	W      io.Writer
@@ -32,6 +33,7 @@ func (w *prefixingWriter) Write(bs []byte) (int, error) {
 	return l + n, err
 }
 
+// An io.Writer that only writes complete lines to the underlying W.
 type lineBufferingWriter struct {
 	W io.Writer
 

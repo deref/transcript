@@ -26,21 +26,21 @@ type Recorder struct {
 func (rec *Recorder) Init() error {
 	var err error
 	rec.stdout = &lineBufferingWriter{
-		W: &rec.Transcript,
+		W: &prefixingWriter{
+			Prefix: "1 ",
+			W:      &rec.Transcript,
+		},
 	}
 	rec.stderr = &lineBufferingWriter{
-		W: &rec.Transcript,
+		W: &prefixingWriter{
+			Prefix: "2 ",
+			W:      &rec.Transcript,
+		},
 	}
 	rec.runner, err = interp.New(
 		interp.StdIO(nil,
-			io.MultiWriter(rec.Stdout, &prefixingWriter{
-				Prefix: "1 ",
-				W:      rec.stdout,
-			}),
-			io.MultiWriter(rec.Stderr, &prefixingWriter{
-				Prefix: "2 ",
-				W:      rec.stderr,
-			}),
+			io.MultiWriter(rec.stdout, rec.Stdout),
+			io.MultiWriter(rec.stderr, rec.Stderr),
 		))
 	return err
 }
@@ -55,24 +55,48 @@ func (rec *Recorder) flush() error {
 	return nil
 }
 
-func (rec *Recorder) RunCommand(ctx context.Context, command string) error {
-	mark := rec.Transcript
+type CommandResult struct {
+	Output   []byte
+	ExitCode int
+}
+
+func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandResult, error) {
+	// Record command.
+	beforeCommandMark := rec.Transcript.Len()
 	stmt, err := parseStmt(command)
 	if err != nil {
-		return fmt.Errorf("parsing: %w", err)
+		return nil, fmt.Errorf("parsing: %w", err)
+	}
+	if rec.Transcript.Len() > 0 {
+		fmt.Fprintln(&rec.Transcript)
 	}
 	fmt.Fprintf(&rec.Transcript, "$ %s\n", command)
+	afterCommandMark := rec.Transcript.Len()
+
+	// Execute command and record output.
 	runErr := rec.runner.Run(ctx, stmt)
 	if err := rec.flush(); err != nil {
-		return err
+		return nil, err
 	}
+	var res CommandResult
+	res.Output = rec.Transcript.Bytes()[afterCommandMark:rec.Transcript.Len()]
+
+	// Record exit code.
 	if status, ok := interp.IsExitStatus(runErr); ok {
+		res.ExitCode = int(status)
 		fmt.Fprintf(&rec.Transcript, "? %d\n", status)
 	}
+
+	// Assume final command is simply "exit", so exclude it from transcript.
+	// TODO: Validate this assumption.
 	if rec.runner.Exited() {
-		rec.Transcript = mark
+		rec.Transcript.Truncate(beforeCommandMark)
 	}
-	return runErr
+
+	if runErr != nil {
+		return nil, runErr
+	}
+	return &res, nil
 }
 
 func (rec *Recorder) Exited() bool {
