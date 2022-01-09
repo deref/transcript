@@ -19,22 +19,40 @@ type Recorder struct {
 	Transcript bytes.Buffer
 
 	runner *interp.Runner
+	stdout *lineBufferingWriter
+	stderr *lineBufferingWriter
 }
 
 func (rec *Recorder) Init() error {
 	var err error
+	rec.stdout = &lineBufferingWriter{
+		W: &rec.Transcript,
+	}
+	rec.stderr = &lineBufferingWriter{
+		W: &rec.Transcript,
+	}
 	rec.runner, err = interp.New(
 		interp.StdIO(nil,
 			io.MultiWriter(rec.Stdout, &prefixingWriter{
 				Prefix: "1 ",
-				W:      &rec.Transcript,
+				W:      rec.stdout,
 			}),
 			io.MultiWriter(rec.Stderr, &prefixingWriter{
 				Prefix: "2 ",
-				W:      &rec.Transcript,
+				W:      rec.stderr,
 			}),
 		))
 	return err
+}
+
+func (rec *Recorder) flush() error {
+	if err := rec.stdout.Flush(); err != nil {
+		return err
+	}
+	if err := rec.stderr.Flush(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (rec *Recorder) RunCommand(ctx context.Context, command string) error {
@@ -45,6 +63,9 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) error {
 	}
 	fmt.Fprintf(&rec.Transcript, "$ %s\n", command)
 	runErr := rec.runner.Run(ctx, stmt)
+	if err := rec.flush(); err != nil {
+		return err
+	}
 	if status, ok := interp.IsExitStatus(runErr); ok {
 		fmt.Fprintf(&rec.Transcript, "? %d\n", status)
 	}

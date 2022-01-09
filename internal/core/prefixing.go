@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"io"
 )
 
@@ -29,4 +30,38 @@ func (w *prefixingWriter) Write(bs []byte) (int, error) {
 	}
 	n, err := w.W.Write(bs[l:])
 	return l + n, err
+}
+
+type lineBufferingWriter struct {
+	W io.Writer
+
+	buf bytes.Buffer
+}
+
+// Call when finished writing. If there is an incomplete line buffered,
+// flush it and append a trailing new line.
+func (w *lineBufferingWriter) Flush() error {
+	n, err := w.flushBuffer()
+	if err == nil && n > 0 {
+		_, err = w.W.Write([]byte{'\n'})
+	}
+	return err
+}
+
+func (w *lineBufferingWriter) flushBuffer() (n int, err error) {
+	n, err = w.W.Write(w.buf.Bytes())
+	w.buf.Next(n)
+	return
+}
+
+func (w *lineBufferingWriter) Write(bs []byte) (int, error) {
+	for i, b := range bs {
+		w.buf.WriteByte(b)
+		if b == '\n' {
+			if _, err := w.flushBuffer(); err != nil {
+				return i + 1, err
+			}
+		}
+	}
+	return len(bs), nil
 }
