@@ -9,6 +9,7 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/deref/transcript/internal/core"
+	"mvdan.cc/sh/v3/interp"
 )
 
 type Shell struct {
@@ -40,7 +41,11 @@ func (sh *Shell) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("readline: %w", err)
 		}
-		if err := sh.rec.RunCommand(ctx, line); err != nil {
+		err = sh.rec.RunCommand(ctx, line)
+		if _, ok := interp.IsExitStatus(err); ok {
+			err = nil
+		}
+		if err != nil {
 			return err
 		}
 		if sh.rec.Exited() {

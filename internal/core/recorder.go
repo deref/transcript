@@ -44,15 +44,14 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) error {
 		return fmt.Errorf("parsing: %w", err)
 	}
 	fmt.Fprintf(&rec.Transcript, "$ %s\n", command)
-	err = rec.runner.Run(ctx, stmt)
-	if status, ok := interp.IsExitStatus(err); ok {
+	runErr := rec.runner.Run(ctx, stmt)
+	if status, ok := interp.IsExitStatus(runErr); ok {
 		fmt.Fprintf(&rec.Transcript, "? %d\n", status)
-		err = nil
 	}
 	if rec.runner.Exited() {
 		rec.Transcript = mark
 	}
-	return err
+	return runErr
 }
 
 func (rec *Recorder) Exited() bool {
