@@ -14,8 +14,7 @@ var rootCmd = &cobra.Command{
 	Use:           "transcript",
 	Args:          cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cmd.SetArgs([]string{"shell"})
-		return cmd.Execute()
+		return cmd.Usage()
 	},
 }
 

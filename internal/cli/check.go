@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -15,30 +16,46 @@ func init() {
 }
 
 var checkCmd = &cobra.Command{
-	Use:   "check <transcript>",
-	Short: "Checks a transcript file",
-	Args:  cobra.ExactArgs(1),
+	Use:   "check <transcripts...>",
+	Short: "Checks transcript files",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
-		ckr := &core.Checker{}
-		f, err := os.Open(args[0])
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		err = ckr.CheckTranscript(ctx, f)
-		var chkErr core.CommandCheckError
-		if errors.As(err, &chkErr) {
-			fmt.Printf("command on line %d failed check\n", chkErr.Lineno)
-			fmt.Printf("$ %s\n", chkErr.Command)
-			fmt.Println(chkErr.Err.Error())
-			var diffErr core.DiffError
-			if errors.As(err, &diffErr) {
-				fmt.Println(diffmatchpatch.New().DiffPrettyText(diffErr.Diffs))
+		failures := 0
+		for _, filename := range args {
+			ok, err := checkFile(ctx, filename)
+			if !ok {
+				failures++
 			}
-		} else {
-			return err
+			if err != nil {
+				return err
+			}
+		}
+		if failures > 0 {
+			os.Exit(1)
 		}
 		return nil
 	},
+}
+
+func checkFile(ctx context.Context, filename string) (ok bool, err error) {
+	ckr := &core.Checker{}
+	f, err := os.Open(filename)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+	err = ckr.CheckTranscript(ctx, f)
+	var chkErr core.CommandCheckError
+	if errors.As(err, &chkErr) {
+		fmt.Printf("failed check at %s:%d\n", filename, chkErr.Lineno)
+		fmt.Printf("$ %s\n", chkErr.Command)
+		fmt.Println(chkErr.Err.Error())
+		var diffErr core.DiffError
+		if errors.As(err, &diffErr) {
+			fmt.Println(diffmatchpatch.New().DiffPrettyText(diffErr.Diffs))
+		}
+		return false, nil
+	}
+	return err == nil, err
 }
