@@ -1,0 +1,26 @@
+# When fiddling with these meta tests, it may help to `export CLICOLOR=0`.
+
+$ transcript check tests/basics.cmdt
+
+$ transcript check tests/output.cmdt.fail
+1 failed check at tests/output.cmdt.fail:2
+1 $ echo actual
+1 output differs
+1 --- expected
+1 +++ actual
+1 @@ -1,2 +1,2 @@
+1 -1 expected
+1 +1 actual
+? 1
+
+$ transcript check tests/true.cmdt.fail
+1 failed check at tests/true.cmdt.fail:2
+1 $ true
+1 expected exit code 1, but got 0
+? 1
+
+$ transcript check tests/false.cmdt.fail
+1 failed check at tests/false.cmdt.fail:1
+1 $ false
+1 expected exit code 0, but got 1
+? 1

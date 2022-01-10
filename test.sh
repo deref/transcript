@@ -1,3 +1,7 @@
 #!/bin/bash
 
-go run . check $(find ./tests -name '*.cmdt')
+export PATH="$PWD:$PATH"
+
+go build .
+
+transcript check $(find ./tests -name '*.cmdt')

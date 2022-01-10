@@ -149,6 +149,9 @@ func TestCLI(t *testing.T) {
 }
 ```
 
-There are also `CheckString` function for small, inline tests. However, prefer
+NOTE: Assuming that `./test.cmdt` uses the CLI tool you are developing, you
+must first build your tool and ensure it is on `PATH`.
+
+There is also a `CheckString` function for small, inline tests. However, prefer
 to use `.cmdt` files so that the `transcript` tool can assist with updates and
 edits.

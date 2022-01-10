@@ -40,8 +40,12 @@ func (sh *Shell) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("readline: %w", err)
 		}
-		if _, err := sh.rec.RunCommand(ctx, line); err != nil {
+		res, err := sh.rec.RunCommand(ctx, line)
+		if err != nil {
 			return err
+		}
+		if res.ExitCode != 0 {
+			fmt.Fprintf(os.Stderr, "? %d\n", res.ExitCode)
 		}
 		if sh.rec.Exited() {
 			return nil

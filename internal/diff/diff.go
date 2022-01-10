@@ -27,5 +27,5 @@ func Plain(expected, actual string) string {
 	if err != nil {
 		panic(err)
 	}
-	return strings.TrimSpace(text)
+	return strings.TrimSpace(text) + "\n"
 }
