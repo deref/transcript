@@ -1,16 +1,52 @@
 # Transcript
 
-`tscript` is a CLI tool for testing other CLI tools.
+`transcript` is a CLI tool for testing other CLI tools.
+
+TODO: Video here.
 
 # Usage
 
 ## Record
 
+Initial authoring of tests is performed in an interactive shell.
+
+```bash
+transcript shell -o example.cmdt
+```
+
 ## Check
+
+To interpret a transcript file and validate that the results (stdio output and
+exit codes) have not changed, run the following:
+
+```bash
+transcript check example.cmdt
+```
+
+Check returns a non-zero exit code if any check failures or other errors occur.
 
 ## Update
 
+When the CLI tools under test are modified, the quickest way to update test
+files is to use the automated `update` process:
+
+```bash
+transcript update example.cmdt
+```
+
+This will interpret a command transcript file, but does not check any output or
+exit status expectations. Instead, updates the given file with the newly
+observed results.
+
+NOTE: Not yet implemented.
+
 ## Edit
+
+While transcript files can be edited by hand, more advanced edits can be made
+using an interactive update session. The experience should be familiar to users
+of `git rebase --interactive`.
+
+Not yet implemented.
 
 # "Command Transcript" File Format
 
