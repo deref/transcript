@@ -131,9 +131,22 @@ In addition to the `transcript` CLI, there is a Go API for users who wish to
 embed `cmdt` scripts in to their existing Go test suites.
 
 ```go
-import "github.com/deref/transcript/cmdtest"
+import (
+  _ "embed"
+
+  "github.com/deref/transcript/cmdtest"
+)
+
+////go:embed test.cmdt
+var fs embed.FS
 
 func TestCLI(t *testing.T) {
-  // TODO: Document me.
+  f, _ := fs.Open("test.cmdt")
+  defer f.Close()
+  cmdtest.Check(f)
 }
 ```
+
+There are also `CheckString` function for small, inline tests. However, prefer
+to use `.cmdt` files so that the `transcript` tool can assist with updates and
+edits.

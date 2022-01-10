@@ -3,7 +3,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/deref/transcript/internal/diff"
 )
 
 type CommandCheckError struct {
@@ -21,9 +21,18 @@ func (err CommandCheckError) Error() string {
 }
 
 type DiffError struct {
-	Diffs []diffmatchpatch.Diff
+	Expected string
+	Actual   string
 }
 
 func (err DiffError) Error() string {
 	return "output differs"
+}
+
+func (err DiffError) Color() string {
+	return diff.Color(err.Expected, err.Actual)
+}
+
+func (err DiffError) Plain() string {
+	return diff.Plain(err.Expected, err.Actual)
 }

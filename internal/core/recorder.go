@@ -85,6 +85,7 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandRe
 	if status, ok := interp.IsExitStatus(runErr); ok {
 		res.ExitCode = int(status)
 		fmt.Fprintf(&rec.Transcript, "? %d\n", status)
+		runErr = nil
 	}
 
 	// Assume final command is simply "exit", so exclude it from transcript.

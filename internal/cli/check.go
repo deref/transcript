@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/deref/transcript/internal/core"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 )
 
@@ -53,7 +52,11 @@ func checkFile(ctx context.Context, filename string) (ok bool, err error) {
 		fmt.Println(chkErr.Err.Error())
 		var diffErr core.DiffError
 		if errors.As(err, &diffErr) {
-			fmt.Println(diffmatchpatch.New().DiffPrettyText(diffErr.Diffs))
+			if color {
+				fmt.Print(diffErr.Color())
+			} else {
+				fmt.Print(diffErr.Plain())
+			}
 		}
 		return false, nil
 	}

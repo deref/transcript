@@ -8,8 +8,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type Checker struct {
@@ -83,7 +81,7 @@ func (ckr *Checker) checkLine(ctx context.Context, text string) error {
 		return nil
 
 	default:
-		return ckr.syntaxErrorf("invalid opcode: %q", ckr.lineno, text[0])
+		return ckr.syntaxErrorf("invalid opcode: %q", text[0])
 	}
 }
 
@@ -95,11 +93,12 @@ func (ckr *Checker) endCommand() error {
 		return ckr.commandCheckError(fmt.Errorf("expected exit code %d, but got %d", ckr.expectedExitCode, ckr.actualResult.ExitCode))
 	}
 
-	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(ckr.expectedOutput.String(), string(ckr.actualResult.Output), true)
-	if differs(diffs) {
+	expectedOutput := ckr.expectedOutput.String()
+	actualOutput := string(ckr.actualResult.Output)
+	if expectedOutput != actualOutput {
 		return ckr.commandCheckError(DiffError{
-			Diffs: diffs,
+			Expected: expectedOutput,
+			Actual:   actualOutput,
 		})
 	}
 
@@ -108,10 +107,6 @@ func (ckr *Checker) endCommand() error {
 	ckr.expectedExitCode = 0
 
 	return nil
-}
-
-func differs(diffs []diffmatchpatch.Diff) bool {
-	return len(diffs) > 1 || diffs[0].Type != diffmatchpatch.DiffEqual
 }
 
 func (ckr *Checker) expectOutput(text string) error {
