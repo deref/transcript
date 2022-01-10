@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"mvdan.cc/sh/v3/interp"
@@ -13,8 +12,8 @@ import (
 )
 
 type Recorder struct {
-	Stdout *os.File
-	Stderr *os.File
+	Stdout io.Writer
+	Stderr io.Writer
 
 	Transcript bytes.Buffer
 
@@ -39,10 +38,17 @@ func (rec *Recorder) Init() error {
 	}
 	rec.runner, err = interp.New(
 		interp.StdIO(nil,
-			io.MultiWriter(rec.stdout, rec.Stdout),
-			io.MultiWriter(rec.stderr, rec.Stderr),
+			io.MultiWriter(rec.stdout, orDiscard(rec.Stdout)),
+			io.MultiWriter(rec.stderr, orDiscard(rec.Stderr)),
 		))
 	return err
+}
+
+func orDiscard(w io.Writer) io.Writer {
+	if w == nil {
+		return io.Discard
+	}
+	return w
 }
 
 func (rec *Recorder) flush() error {
