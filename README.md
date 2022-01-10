@@ -6,6 +6,8 @@ TODO: Video here.
 
 # Usage
 
+Don't yet! You found this repository too early :)
+
 ## Record
 
 Initial authoring of tests is performed in an interactive shell.
