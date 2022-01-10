@@ -44,7 +44,7 @@ func (ckr *Checker) CheckTranscript(ctx context.Context, r io.Reader) error {
 }
 
 func (ckr *Checker) checkLine(ctx context.Context, text string) error {
-	if text == "" || text[0] == '#' {
+	if strings.TrimSpace(text) == "" || text[0] == '#' {
 		return nil
 	}
 	parts := strings.SplitN(text, " ", 2)
