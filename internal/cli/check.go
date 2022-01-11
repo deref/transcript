@@ -17,7 +17,6 @@ func init() {
 var checkCmd = &cobra.Command{
 	Use:   "check <transcripts...>",
 	Short: "Checks transcript files",
-	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		failures := 0
@@ -38,12 +37,13 @@ var checkCmd = &cobra.Command{
 }
 
 func checkFile(ctx context.Context, filename string) (ok bool, err error) {
-	ckr := &core.Checker{}
 	f, err := os.Open(filename)
 	if err != nil {
 		return false, err
 	}
 	defer f.Close()
+
+	ckr := &core.Checker{}
 	err = ckr.CheckTranscript(ctx, f)
 	var chkErr core.CommandCheckError
 	if errors.As(err, &chkErr) {

@@ -1,22 +1,15 @@
 package core
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"strconv"
-	"strings"
 )
 
 type Checker struct {
-	lineno int
-
-	rec *Recorder
-
-	command          string
-	commandLineno    int
+	rec              *Recorder
+	interpreter      *Interpreter
 	expectedOutput   bytes.Buffer
 	expectedExitCode int
 	actualResult     *CommandResult
@@ -28,65 +21,49 @@ func (ckr *Checker) CheckTranscript(ctx context.Context, r io.Reader) error {
 		return fmt.Errorf("initializing recorder: %w", err)
 	}
 
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		ckr.lineno++
-		if err := ckr.checkLine(ctx, scanner.Text()); err != nil {
-			return err
-		}
+	ckr.interpreter = &Interpreter{
+		Handler: &checkHandler{
+			Checker: ckr,
+		},
 	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("scanning: %w", err)
+
+	if err := ckr.interpreter.ExecTranscript(ctx, r); err != nil {
+		return err
 	}
 	return ckr.endCommand()
 }
 
-func (ckr *Checker) checkLine(ctx context.Context, text string) error {
-	if strings.TrimSpace(text) == "" || text[0] == '#' {
-		return nil
+type checkHandler struct {
+	*Checker
+}
+
+func (ckr *checkHandler) HandleComment(ctx context.Context, text string) error {
+	return nil
+}
+
+func (ckr *checkHandler) HandleRun(ctx context.Context, command string) error {
+	if err := ckr.endCommand(); err != nil {
+		return err
 	}
-	parts := strings.SplitN(text, " ", 2)
-	opcode := parts[0]
-	var payload string
-	if len(parts) == 2 {
-		payload = parts[1]
+	var err error
+	ckr.actualResult, err = ckr.rec.RunCommand(ctx, command)
+	if err != nil {
+		return ckr.commandCheckError(err)
 	}
-	switch opcode {
+	return nil
+}
 
-	case "$":
-		if err := ckr.endCommand(); err != nil {
-			return err
-		}
-		ckr.command = payload
-		ckr.commandLineno = ckr.lineno
-		var err error
-		ckr.actualResult, err = ckr.rec.RunCommand(ctx, ckr.command)
-		if err != nil {
-			return ckr.commandCheckError(err)
-		}
-		return nil
+func (ckr *checkHandler) HandleOutput(ctx context.Context, fd int, line string) error {
+	return ckr.expectOutput(fmt.Sprintf("%d %s", fd, line))
+}
 
-	case "1", "2":
-		return ckr.expectOutput(text)
-
-	case "?":
-		if ckr.command == "" {
-			return ckr.syntaxErrorf("unexpected exit status check")
-		}
-		var err error
-		ckr.expectedExitCode, err = strconv.Atoi(payload)
-		if err != nil {
-			return ckr.syntaxErrorf("parsing error code: %w", err)
-		}
-		return nil
-
-	default:
-		return ckr.syntaxErrorf("invalid opcode: %q", text[0])
-	}
+func (ckr *checkHandler) HandleExitCode(ctx context.Context, exitCode int) error {
+	ckr.expectedExitCode = exitCode
+	return nil
 }
 
 func (ckr *Checker) endCommand() error {
-	if ckr.command == "" {
+	if ckr.actualResult == nil {
 		return nil
 	}
 	if ckr.expectedExitCode != ckr.actualResult.ExitCode {
@@ -102,7 +79,6 @@ func (ckr *Checker) endCommand() error {
 		})
 	}
 
-	ckr.command = ""
 	ckr.expectedOutput.Reset()
 	ckr.expectedExitCode = 0
 
@@ -110,21 +86,18 @@ func (ckr *Checker) endCommand() error {
 }
 
 func (ckr *Checker) expectOutput(text string) error {
-	if ckr.command == "" {
-		return ckr.syntaxErrorf("unexpected output check")
-	}
 	fmt.Fprintln(&ckr.expectedOutput, text)
 	return nil
 }
 
 func (ckr *Checker) syntaxErrorf(message string, v ...interface{}) error {
-	return fmt.Errorf("on line %d: "+message, append([]interface{}{ckr.lineno}, v...))
+	return fmt.Errorf("on line %d: "+message, append([]interface{}{ckr.interpreter.Lineno}, v...))
 }
 
 func (ckr *Checker) commandCheckError(err error) CommandCheckError {
 	return CommandCheckError{
-		Command: ckr.command,
-		Lineno:  ckr.lineno,
+		Command: ckr.interpreter.Command,
+		Lineno:  ckr.interpreter.CommandLineno,
 		Err:     err,
 	}
 }

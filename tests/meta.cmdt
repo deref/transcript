@@ -3,7 +3,7 @@
 $ transcript check tests/basics.cmdt
 
 $ transcript check tests/output.cmdt.fail
-1 failed check at tests/output.cmdt.fail:2
+1 failed check at tests/output.cmdt.fail:1
 1 $ echo actual
 1 output differs
 1 --- expected
@@ -14,7 +14,7 @@ $ transcript check tests/output.cmdt.fail
 ? 1
 
 $ transcript check tests/true.cmdt.fail
-1 failed check at tests/true.cmdt.fail:2
+1 failed check at tests/true.cmdt.fail:1
 1 $ true
 1 expected exit code 1, but got 0
 ? 1
