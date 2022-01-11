@@ -137,7 +137,7 @@ import (
   "github.com/deref/transcript/cmdtest"
 )
 
-////go:embed test.cmdt
+//go:embed test.cmdt
 var fs embed.FS
 
 func TestCLI(t *testing.T) {
