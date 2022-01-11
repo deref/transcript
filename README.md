@@ -133,7 +133,8 @@ Operations with the following opcodes are supported:
     </p>
     <p>
       Output lines are matched exactly. More flexible matching may be
-      configured by `%` directives in a future version of Transcript.
+      configured by <code>%</code> directives in a future version of
+      Transcript.
     </p>
     <p>
       Transcript checking assumes that the interleaving of stdout and stderr
