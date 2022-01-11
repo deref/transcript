@@ -1,10 +1,29 @@
 # Transcript
 
-`transcript` is a CLI tool for testing other CLI tools.
+`transcript` is a CLI tool for snapshot testing other CLI tools.
 
 TODO: Video here.
 
 # Usage
+
+Automatically record a shell session or type-out a transcript file by hand,
+then use the `check` command!
+
+```bash
+cat > demo.cmdt <<EOF
+$ echo stdout
+1 stdout
+
+$ echo stderr 1>&2
+2 stderr
+
+# Non-zero exit codes.
+$ false
+? 1
+EOF
+
+transcript check ./demo.cmdt
+```
 
 ## Install
 
@@ -20,9 +39,14 @@ re-packaged for various additional distribution channels.
 
 Initial authoring of tests is performed in an interactive shell.
 
+To record an interactive session to a file, run:
+
 ```bash
 transcript shell -o example.cmdt
 ```
+
+The interactive shell supports standard readline behaviors and can be exited
+with `^d` or `exit` like most other shells.
 
 ## Check
 
@@ -45,8 +69,8 @@ transcript update example.cmdt
 ```
 
 This will interpret a command transcript file, but does not check any output or
-exit status expectations. Instead, updates the given file with the newly
-observed results.
+exit status expectations. Instead, the given file will be rewritten with the
+newly observed results.
 
 ## Edit
 
@@ -54,7 +78,7 @@ While transcript files can be edited by hand, more advanced edits can be made
 using an interactive update session. The experience should be familiar to users
 of `git rebase --interactive`.
 
-Not yet implemented.
+NOTE: Not yet implemented.
 
 # "Command Transcript" File Format
 
