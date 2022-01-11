@@ -6,7 +6,15 @@ TODO: Video here.
 
 # Usage
 
-Don't yet! You found this repository too early :)
+## Install
+
+```bash
+go get -u github.com/deref/transcript
+```
+
+NOTE: Transcript is not Go-specific. It is simply written in Go and Go provides
+a convenient distribution mechanism. If there is expressed interest, it may be
+re-packaged for various additional distribution channels.
 
 ## Record
 
