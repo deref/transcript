@@ -17,9 +17,10 @@ type Recorder struct {
 
 	Transcript bytes.Buffer
 
-	runner *interp.Runner
-	stdout *lineBufferingWriter
-	stderr *lineBufferingWriter
+	needsBlank bool
+	runner     *interp.Runner
+	stdout     *lineBufferingWriter
+	stderr     *lineBufferingWriter
 }
 
 func (rec *Recorder) Init() error {
@@ -67,14 +68,16 @@ type CommandResult struct {
 }
 
 func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandResult, error) {
-	// Record command.
-	beforeCommandMark := rec.Transcript.Len()
 	stmt, err := parseStmt(command)
 	if err != nil {
 		return nil, fmt.Errorf("parsing: %w", err)
 	}
-	if rec.Transcript.Len() > 0 {
+
+	// Record command. Include a preceeding blank line for all but the first command.
+	beforeCommandMark := rec.Transcript.Len()
+	if rec.needsBlank {
 		fmt.Fprintln(&rec.Transcript)
+		rec.needsBlank = false
 	}
 	fmt.Fprintf(&rec.Transcript, "$ %s\n", command)
 	afterCommandMark := rec.Transcript.Len()
@@ -91,6 +94,7 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandRe
 	if status, ok := interp.IsExitStatus(runErr); ok {
 		res.ExitCode = int(status)
 		fmt.Fprintf(&rec.Transcript, "? %d\n", status)
+		rec.needsBlank = true
 		runErr = nil
 	}
 
@@ -104,6 +108,11 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandRe
 		return nil, runErr
 	}
 	return &res, nil
+}
+
+func (rec *Recorder) RecordComment(text string) {
+	fmt.Fprintln(&rec.Transcript, text)
+	rec.needsBlank = false
 }
 
 func (rec *Recorder) Exited() bool {

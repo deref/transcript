@@ -40,8 +40,6 @@ This will interpret a command transcript file, but does not check any output or
 exit status expectations. Instead, updates the given file with the newly
 observed results.
 
-NOTE: Not yet implemented.
-
 ## Edit
 
 While transcript files can be edited by hand, more advanced edits can be made
