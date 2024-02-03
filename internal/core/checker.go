@@ -66,6 +66,12 @@ func (ckr *Checker) endCommand() error {
 	if ckr.actualResult == nil {
 		return nil
 	}
+	defer func() {
+		ckr.actualResult = nil
+		ckr.expectedOutput.Reset()
+		ckr.expectedExitCode = 0
+	}()
+
 	if ckr.expectedExitCode != ckr.actualResult.ExitCode {
 		return ckr.commandCheckError(fmt.Errorf("expected exit code %d, but got %d", ckr.expectedExitCode, ckr.actualResult.ExitCode))
 	}
@@ -78,9 +84,6 @@ func (ckr *Checker) endCommand() error {
 			Actual:   actualOutput,
 		})
 	}
-
-	ckr.expectedOutput.Reset()
-	ckr.expectedExitCode = 0
 
 	return nil
 }
