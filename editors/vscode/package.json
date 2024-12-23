@@ -1,0 +1,30 @@
+{
+  "name": "cmdt",
+  "displayName": "Command Transcript Syntax",
+  "description": "Syntax highlighting for Command Transcript (.cmdt) files",
+  "version": "0.0.1",
+  "repository": "https://github.com/deref/transcript",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "cmdt",
+        "aliases": ["Command Transcript", "cmdt"],
+        "extensions": [".cmdt"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cmdt",
+        "scopeName": "source.cmdt",
+        "path": "./syntaxes/cmdt.tmLanguage.json"
+      }
+    ]
+  }
+}

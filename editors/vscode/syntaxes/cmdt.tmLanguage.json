@@ -1,0 +1,55 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Command Transcript",
+  "scopeName": "source.cmdt",
+  "patterns": [
+    {
+      "match": "^(#)\\s*(.*$)",
+      "name": "comment.line.cmdt",
+      "captures": {
+        "1": { "name": "punctuation.definition.comment.cmdt" },
+        "2": { "name": "comment.line.content.cmdt comment.line" }
+      }
+    },
+    {
+      "match": "^(%)\\s*(.*$)",
+      "name": "meta.directive.cmdt",
+      "captures": {
+        "1": { "name": "punctuation.definition.directive.cmdt keyword.control" },
+        "2": { "name": "meta.directive.content.cmdt support.type" }
+      }
+    },
+    {
+      "match": "^(\\$)\\s*(.*$)",
+      "name": "meta.command.cmdt",
+      "captures": {
+        "1": { "name": "punctuation.definition.command.cmdt keyword.control" },
+        "2": { "name": "meta.command.content.cmdt keyword.control" }
+      }
+    },
+    {
+      "match": "^(1)\\s*(.*$)",
+      "name": "meta.output.stdout.cmdt",
+      "captures": {
+        "1": { "name": "punctuation.definition.stdout.cmdt constant.numeric" },
+        "2": { "name": "meta.output.stdout.content.cmdt markup.inserted" }
+      }
+    },
+    {
+      "match": "^(2)\\s*(.*$)",
+      "name": "meta.output.stderr.cmdt",
+      "captures": {
+        "1": { "name": "punctuation.definition.stderr.cmdt constant.numeric" },
+        "2": { "name": "meta.output.stderr.content.cmdt invalid.illegal" }
+      }
+    },
+    {
+      "match": "^(\\?)\\s*(\\d+)\\s*$",
+      "name": "meta.exit-code.cmdt",
+      "captures": {
+        "1": { "name": "punctuation.definition.exit-code.cmdt keyword.operator" },
+        "2": { "name": "constant.numeric.exit-code.value.cmdt constant.numeric" }
+      }
+    }
+  ]
+}
