@@ -186,3 +186,7 @@ must first build your tool and ensure it is on `PATH`.
 There is also a `CheckString` function for small, inline tests. However, prefer
 to use `.cmdt` files so that the `transcript` tool can assist with updates and
 edits.
+
+# Editor Support
+
+Editor support (for syntax highlighting) is available for [several editors](./editors).
