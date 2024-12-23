@@ -27,10 +27,7 @@ func (ckr *Checker) CheckTranscript(ctx context.Context, r io.Reader) error {
 		},
 	}
 
-	if err := ckr.interpreter.ExecTranscript(ctx, r); err != nil {
-		return err
-	}
-	return ckr.endCommand()
+	return ckr.interpreter.ExecTranscript(ctx, r)
 }
 
 type checkHandler struct {
@@ -42,9 +39,6 @@ func (ckr *checkHandler) HandleComment(ctx context.Context, text string) error {
 }
 
 func (ckr *checkHandler) HandleRun(ctx context.Context, command string) error {
-	if err := ckr.endCommand(); err != nil {
-		return err
-	}
 	var err error
 	ckr.actualResult, err = ckr.rec.RunCommand(ctx, command)
 	if err != nil {
@@ -62,10 +56,7 @@ func (ckr *checkHandler) HandleExitCode(ctx context.Context, exitCode int) error
 	return nil
 }
 
-func (ckr *Checker) endCommand() error {
-	if ckr.actualResult == nil {
-		return nil
-	}
+func (ckr *Checker) HandleEnd(ctx context.Context) error {
 	defer func() {
 		ckr.actualResult = nil
 		ckr.expectedOutput.Reset()

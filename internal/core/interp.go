@@ -15,9 +15,9 @@ type Interpreter struct {
 	Handler Handler
 
 	// Exposed state.
-	Lineno        int
-	Command       string
-	CommandLineno int
+	Lineno        int    // Line currently executing.
+	Command       string // Text of the most recently executed command.
+	CommandLineno int    // Line of the most recently executed command.
 
 	// Private state.
 	acceptResults bool
@@ -28,6 +28,7 @@ type Handler interface {
 	HandleRun(ctx context.Context, command string) error
 	HandleOutput(ctx context.Context, fd int, line string) error
 	HandleExitCode(ctx context.Context, exitCode int) error
+	HandleEnd(ctx context.Context) error
 }
 
 func (t *Interpreter) ExecTranscript(ctx context.Context, r io.Reader) error {
@@ -41,7 +42,8 @@ func (t *Interpreter) ExecTranscript(ctx context.Context, r io.Reader) error {
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("scanning: %w", err)
 	}
-	return nil
+
+	return t.flushCommand(ctx)
 }
 
 func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
@@ -57,6 +59,9 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 	}
 	switch opcode {
 	case "$":
+		if err := t.flushCommand(ctx); err != nil {
+			return err
+		}
 		t.Command = payload
 		t.CommandLineno = t.Lineno
 		t.acceptResults = true
@@ -83,6 +88,13 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 	default:
 		return t.syntaxErrorf("invalid opcode: %q", text[0])
 	}
+}
+
+func (t *Interpreter) flushCommand(ctx context.Context) error {
+	if t.CommandLineno == 0 {
+		return nil
+	}
+	return t.Handler.HandleEnd(ctx)
 }
 
 func (t *Interpreter) syntaxErrorf(message string, v ...interface{}) error {

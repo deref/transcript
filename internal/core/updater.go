@@ -49,3 +49,7 @@ func (upr *updateHandler) HandleOutput(ctx context.Context, fd int, line string)
 func (upr *updateHandler) HandleExitCode(ctx context.Context, exitCode int) error {
 	return nil
 }
+
+func (upr *updateHandler) HandleEnd(ctx context.Context) error {
+	return nil
+}

@@ -1,0 +1,5 @@
+$ false
+# Intentionally not checking non-zero exit code.
+
+# Implicitly assert exit code is zero; expect that to fail.
+$ true

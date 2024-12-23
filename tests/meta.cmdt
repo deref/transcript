@@ -24,3 +24,9 @@ $ transcript check tests/false.cmdt.fail
 1 $ false
 1 expected exit code 0, but got 1
 ? 1
+
+$ transcript check tests/implicit-exit-0.cmdt.fail
+1 failed check at tests/implicit-exit-0.cmdt.fail:1
+1 $ false
+1 expected exit code 0, but got 1
+? 1
