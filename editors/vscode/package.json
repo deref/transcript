@@ -25,6 +25,13 @@
         "scopeName": "source.cmdt",
         "path": "./syntaxes/cmdt.tmLanguage.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[cmdt]": {
+        "editor.tabSize": 8,
+        "editor.insertSpaces": false,
+        "editor.renderWhitespace": "boundary"
+      }
+    }
   }
 }
