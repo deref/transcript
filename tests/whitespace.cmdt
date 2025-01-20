@@ -3,3 +3,26 @@ $ printf 'a\n\nb\n'
 1 a
 1
 1 b
+
+# Stdout without newline.
+$ printf 'abc'
+1 abc
+% no-newline
+
+# Stderr without newline.
+$ printf 'xyz' 1>&2
+2 xyz
+% no-newline
+
+# Both stdout and stderr, neither have a newline.
+$ (printf 'abc'; (printf 'xyz' 1>&2))
+1 abc
+% no-newline
+2 xyz
+% no-newline
+
+# Exit status assertions go after no-newline directive.
+$ (printf 'abc'; false)
+1 abc
+% no-newline
+? 1

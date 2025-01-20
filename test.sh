@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This file exercises the check CLI.
+# It's intentionally redundant with transcript_test.go, which exercises the Go API.
+
 set -e
 
 export PATH="$PWD/bin:$PATH"

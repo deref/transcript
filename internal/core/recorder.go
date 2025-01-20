@@ -47,11 +47,23 @@ func orDiscard(w io.Writer) io.Writer {
 }
 
 func (rec *Recorder) flush() error {
-	if err := rec.stdout.Flush(); err != nil {
+	if err := rec.flushStream(rec.stdout); err != nil {
 		return err
 	}
-	if err := rec.stderr.Flush(); err != nil {
+	if err := rec.flushStream(rec.stderr); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (rec *Recorder) flushStream(w *lineBufferingWriter) error {
+	if err := w.Flush(); err != nil {
+		return err
+	}
+	n := rec.Transcript.Len()
+	if n > 0 && rec.Transcript.Bytes()[n-1] != '\n' {
+		w.Write([]byte{'\n'})
+		io.WriteString(&rec.Transcript, "% no-newline\n")
 	}
 	return nil
 }

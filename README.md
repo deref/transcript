@@ -153,7 +153,13 @@ Operations with the following opcodes are supported:
 
   <dt><code>%</code> &mdash; directive</dt>
   <dd>
-    <p>Reserved for future use by Transcript.</p>
+    <p>Configures special behaviors in the Transcript interpreter.</p>
+    <p>Supported directives:</p>
+    <ul>
+      <li><code>no-newline</code> &mdash; Indicates that the last line of the preceding output did not end with a newline character. Applies to
+      either stdout or stderr based on what's on the opcode of the previous line.
+      </li>
+    </ul>
   </dd>
 </dl>
 
@@ -169,6 +175,14 @@ If the arguments to an operation are completely empty, then the space after
 the opcode is optional. Such an extraneous space is discouraged, but not
 disallowed because text editors should preserve trailing whitespace in .cmdt
 files to support the precision mentioned above.
+
+Conventionally, command line tools always output a '\n' after each line,
+including the last line in a file. However, there are some situations where
+it is important to represent the lack of a trailing newline. In this case,
+the `% no-newline` directive signifies that the last line of the transcript
+is terminated with a synthetic newline. That is, the recorded output did not
+have a newline and the checker should strip the synthetic newline before
+checking against test output.
 
 # Go API
 

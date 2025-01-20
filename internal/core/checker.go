@@ -55,6 +55,14 @@ func (ckr *checkHandler) HandleOutput(ctx context.Context, fd int, line string) 
 	return ckr.expectOutput(fmt.Sprintf("%d%s%s", fd, sep, line))
 }
 
+func (ckr *checkHandler) HandleNoNewline(ctx context.Context, fd int) error {
+	// Assumes the previous line contains an already written newline.
+	// This is also why we can ignore the fd parameter, as it's assumed to
+	// match the previous line.
+	_, err := io.WriteString(&ckr.expectedOutput, "% no-newline\n")
+	return err
+}
+
 func (ckr *checkHandler) HandleExitCode(ctx context.Context, exitCode int) error {
 	ckr.expectedExitCode = exitCode
 	return nil
@@ -74,6 +82,7 @@ func (ckr *Checker) HandleEnd(ctx context.Context) error {
 	expectedOutput := ckr.expectedOutput.String()
 	actualOutput := string(ckr.actualResult.Output)
 	if expectedOutput != actualOutput {
+		//fmt.Printf("expected: %q\nactual: %q\n", expectedOutput, actualOutput)
 		return ckr.commandCheckError(DiffError{
 			Expected: expectedOutput,
 			Actual:   actualOutput,
@@ -89,7 +98,7 @@ func (ckr *Checker) expectOutput(text string) error {
 }
 
 func (ckr *Checker) syntaxErrorf(message string, v ...any) error {
-	return fmt.Errorf("on line %d: "+message, append([]any{ckr.interpreter.Lineno}, v...))
+	return fmt.Errorf("syntax error on line %d: "+message, append([]any{ckr.interpreter.Lineno}, v...))
 }
 
 func (ckr *Checker) commandCheckError(err error) CommandCheckError {

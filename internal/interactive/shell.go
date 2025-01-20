@@ -44,6 +44,7 @@ func (sh *Shell) Run(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		// TODO: Query cursor position. If not at start of line, println "% no-newline".
 		if res.ExitCode != 0 {
 			fmt.Fprintf(os.Stderr, "? %d\n", res.ExitCode)
 		}

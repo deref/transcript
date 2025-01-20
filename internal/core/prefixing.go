@@ -67,12 +67,9 @@ type lineBufferingWriter struct {
 }
 
 // Call when finished writing. If there is an incomplete line buffered,
-// flush it and append a trailing new line.
+// flush it _without_ appending a trailing new line.
 func (w *lineBufferingWriter) Flush() error {
-	n, err := w.flushBuffer()
-	if err == nil && n > 0 {
-		_, err = w.W.Write([]byte{'\n'})
-	}
+	_, err := w.flushBuffer()
 	return err
 }
 

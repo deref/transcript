@@ -46,6 +46,10 @@ func (upr *updateHandler) HandleOutput(ctx context.Context, fd int, line string)
 	return nil
 }
 
+func (upr *updateHandler) HandleNoNewline(ctx context.Context, fd int) error {
+	return nil
+}
+
 func (upr *updateHandler) HandleExitCode(ctx context.Context, exitCode int) error {
 	return nil
 }

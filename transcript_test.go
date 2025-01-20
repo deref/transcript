@@ -1,3 +1,6 @@
+// This file exercises the Go API.
+// It's intentionally redundant with ./test.sh, which exercises the CLI.
+
 package main_test
 
 import (
@@ -14,7 +17,7 @@ import (
 var tests embed.FS
 
 func TestTranscript(t *testing.T) {
-	err := fs.WalkDir(tests, ".", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(tests, "tests", func(path string, d fs.DirEntry, err error) error {
 		if !assert.NoError(t, err) {
 			return err
 		}
@@ -26,7 +29,7 @@ func TestTranscript(t *testing.T) {
 			return nil
 		}
 		defer f.Close()
-		t.Run("checking_"+path, func(t *testing.T) {
+		t.Run("check:"+path, func(t *testing.T) {
 			cmdtest.Check(t, f)
 		})
 		return nil

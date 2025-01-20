@@ -7,7 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPrefixingWriter(t *testing.T) {
+func TestPrefixingWriterWithNormalLines(t *testing.T) {
+	var buf bytes.Buffer
+	w := newPrefixingWriter("--", ">>", &buf)
+	bs := []byte("abc\nxyz\n")
+	n, err := w.Write(bs)
+	assert.NoError(t, err)
+	assert.Equal(t, n, len(bs))
+	assert.Equal(t, "-->>abc\n-->>xyz\n", buf.String())
+}
+
+func TestPrefixingWriterWithBlankLineAndUnterminated(t *testing.T) {
 	var buf bytes.Buffer
 	w := newPrefixingWriter("--", ">>", &buf)
 	bs := []byte("abc\n\nxyz")
@@ -15,6 +25,16 @@ func TestPrefixingWriter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, n, len(bs))
 	assert.Equal(t, "-->>abc\n--\n-->>xyz", buf.String())
+}
+
+func TestPrefixingWriterWithoutAnyNewlines(t *testing.T) {
+	var buf bytes.Buffer
+	w := newPrefixingWriter("--", ">>", &buf)
+	bs := []byte("abc")
+	n, err := w.Write(bs)
+	assert.NoError(t, err)
+	assert.Equal(t, n, len(bs))
+	assert.Equal(t, "-->>abc", buf.String())
 }
 
 func TestLineBufferingWriter(t *testing.T) {
@@ -33,6 +53,6 @@ func TestLineBufferingWriter(t *testing.T) {
 	assert.Equal(t, "1 ab\n", buf.String())
 	pw1.Write([]byte("c\n")) // End with a complete line.
 	lbw1.Flush()             // No-op.
-	lbw2.Flush()             // Completes line.
-	assert.Equal(t, "1 ab\n1 c\n2 x\n", buf.String())
+	lbw2.Flush()             // Flushes line.
+	assert.Equal(t, "1 ab\n1 c\n2 x", buf.String())
 }
