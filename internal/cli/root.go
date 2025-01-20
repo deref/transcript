@@ -25,7 +25,7 @@ func Execute(ctx context.Context) {
 	}
 }
 
-func warnf(message string, v ...interface{}) {
+func warnf(message string, v ...any) {
 	warn(fmt.Errorf(message, v...))
 }
 

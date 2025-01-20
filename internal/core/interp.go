@@ -97,6 +97,6 @@ func (t *Interpreter) flushCommand(ctx context.Context) error {
 	return t.Handler.HandleEnd(ctx)
 }
 
-func (t *Interpreter) syntaxErrorf(message string, v ...interface{}) error {
-	return fmt.Errorf("on line %d: "+message, append([]interface{}{t.Lineno}, v...))
+func (t *Interpreter) syntaxErrorf(message string, v ...any) error {
+	return fmt.Errorf("on line %d: "+message, append([]any{t.Lineno}, v...))
 }

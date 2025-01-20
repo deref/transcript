@@ -88,8 +88,8 @@ func (ckr *Checker) expectOutput(text string) error {
 	return nil
 }
 
-func (ckr *Checker) syntaxErrorf(message string, v ...interface{}) error {
-	return fmt.Errorf("on line %d: "+message, append([]interface{}{ckr.interpreter.Lineno}, v...))
+func (ckr *Checker) syntaxErrorf(message string, v ...any) error {
+	return fmt.Errorf("on line %d: "+message, append([]any{ckr.interpreter.Lineno}, v...))
 }
 
 func (ckr *Checker) commandCheckError(err error) CommandCheckError {
