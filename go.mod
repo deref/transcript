@@ -1,11 +1,13 @@
 module github.com/deref/transcript
 
-go 1.22
+go 1.23
 
 toolchain go1.23.3
 
 require (
+	github.com/akedrou/textdiff v0.1.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/fatih/color v1.18.0
 	github.com/natefinch/atomic v1.0.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/sergi/go-diff v1.2.0
@@ -17,6 +19,8 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/sync v0.8.0 // indirect

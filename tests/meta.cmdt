@@ -8,7 +8,7 @@ $ transcript check tests/output.cmdt.fail
 1 output differs
 1 --- expected
 1 +++ actual
-1 @@ -1,2 +1,2 @@
+1 @@ -1 +1 @@
 1 -1 expected
 1 +1 actual
 ? 1
