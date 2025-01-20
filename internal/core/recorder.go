@@ -26,16 +26,10 @@ type Recorder struct {
 func (rec *Recorder) Init() error {
 	var err error
 	rec.stdout = &lineBufferingWriter{
-		W: &prefixingWriter{
-			Prefix: "1 ",
-			W:      &rec.Transcript,
-		},
+		W: newPrefixingWriter("1", " ", &rec.Transcript),
 	}
 	rec.stderr = &lineBufferingWriter{
-		W: &prefixingWriter{
-			Prefix: "2 ",
-			W:      &rec.Transcript,
-		},
+		W: newPrefixingWriter("2", " ", &rec.Transcript),
 	}
 	rec.runner, err = interp.New(
 		interp.StdIO(nil,
@@ -125,7 +119,7 @@ func parseStmt(s string) (syntax.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err == nil && len(f.Stmts) != 1 {
+	if len(f.Stmts) != 1 {
 		return nil, fmt.Errorf("expected exactly one statement, got %d", len(f.Stmts))
 	}
 	return f.Stmts[0], nil

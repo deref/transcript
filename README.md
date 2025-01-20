@@ -94,8 +94,7 @@ primarily use the `transcript` tool to create and update transcripts.
 
 Cmdt files are line-oriented. Each line represents an instruction to the
 Transcript interpreter. Each instruction begins with an opcode, followed by a
-space. The remainder of an instruction line forms arguments to the operation
-specified by the opcode.
+single space. The remainder of an instruction line forms arguments to the operation specified by the opcode.
 
 ## Operations
 
@@ -157,6 +156,19 @@ Operations with the following opcodes are supported:
     <p>Reserved for future use by Transcript.</p>
   </dd>
 </dl>
+
+## Whitespace Handling
+
+Within the arguments of an operation, whitespace is significant. Opcodes are
+separated from their arguments by a single space. If there is more than one
+space, the additional spaces are part of the arguments. Similarly, trailing
+whitespace is part of the argument as well. This allows precise recording of
+the whitespace behavior of commands under test.
+
+If the arguments to an operation are completely empty, then the space after
+the opcode is optional. Such an extraneous space is discouraged, but not
+disallowed because text editors should preserve trailing whitespace in .cmdt
+files to support the precision mentioned above.
 
 # Go API
 

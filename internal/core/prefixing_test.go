@@ -9,30 +9,22 @@ import (
 
 func TestPrefixingWriter(t *testing.T) {
 	var buf bytes.Buffer
-	w := &prefixingWriter{
-		Prefix: ">>",
-		W:      &buf,
-	}
-	n, err := w.Write([]byte("abc\nxyz"))
+	w := newPrefixingWriter("--", ">>", &buf)
+	bs := []byte("abc\n\nxyz")
+	n, err := w.Write(bs)
 	assert.NoError(t, err)
-	assert.Equal(t, n, 7)
-	assert.Equal(t, ">>abc\n>>xyz", buf.String())
+	assert.Equal(t, n, len(bs))
+	assert.Equal(t, "-->>abc\n--\n-->>xyz", buf.String())
 }
 
 func TestLineBufferingWriter(t *testing.T) {
 	var buf bytes.Buffer
 
 	lbw1 := &lineBufferingWriter{W: &buf}
-	pw1 := &prefixingWriter{
-		Prefix: "1 ",
-		W:      lbw1,
-	}
+	pw1 := newPrefixingWriter("1", " ", lbw1)
 
 	lbw2 := &lineBufferingWriter{W: &buf}
-	pw2 := &prefixingWriter{
-		Prefix: "2 ",
-		W:      lbw2,
-	}
+	pw2 := newPrefixingWriter("2", " ", lbw2)
 
 	pw1.Write([]byte("a")) // Start a line.
 	pw2.Write([]byte("x")) // Incomplete line.

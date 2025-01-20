@@ -1,0 +1,5 @@
+# NOTE: No trailing space after '1' on middle line.
+$ printf 'a\n\nb\n'
+1 a
+1
+1 b

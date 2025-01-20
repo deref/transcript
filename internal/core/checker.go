@@ -48,7 +48,11 @@ func (ckr *checkHandler) HandleRun(ctx context.Context, command string) error {
 }
 
 func (ckr *checkHandler) HandleOutput(ctx context.Context, fd int, line string) error {
-	return ckr.expectOutput(fmt.Sprintf("%d %s", fd, line))
+	sep := ""
+	if len(line) > 0 {
+		sep = " "
+	}
+	return ckr.expectOutput(fmt.Sprintf("%d%s%s", fd, sep, line))
 }
 
 func (ckr *checkHandler) HandleExitCode(ctx context.Context, exitCode int) error {
