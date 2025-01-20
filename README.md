@@ -2,7 +2,10 @@
 
 `transcript` is a CLI tool for snapshot testing other CLI tools.
 
-TODO: Video here.
+The snapshot files -- called "transcripts" -- are designed to be easily human-readable
+and reasonably human-writable, without sacrificing precise assertions about the behavior of
+the tool under test. In practice, most transcripts can be authored interactively
+and maintained in an automated way.
 
 # Usage
 
