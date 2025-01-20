@@ -2,14 +2,18 @@
 
 set -e
 
-export PATH="$PWD:$PATH"
+export PATH="$PWD/bin:$PATH"
+if [[ $(which transcript) != "$PWD/bin/transcript" ]]; then
+  echo 'built transcript not on PATH' 1>&2
+  exit 1
+fi
 
 # All the "*.cmdt" files are used directly as tests.
 # The "*.fail" tests are run indirectly by 'meta.cmdt'.
 tests=$(find ./tests -name '*.cmdt')
 
-set -x
+./build.sh
 
-go build .
+set -x
 
 transcript check $tests
