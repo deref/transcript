@@ -3,7 +3,7 @@
 $ transcript check tests/basics.cmdt
 
 $ transcript check tests/output.cmdt.fail
-1 failed check at tests/output.cmdt.fail:1
+1 failed check at tests/output.cmdt.fail:2
 1 $ echo actual
 1 output differs
 1 --- expected
@@ -14,17 +14,19 @@ $ transcript check tests/output.cmdt.fail
 ? 1
 
 $ transcript check tests/true.cmdt.fail
-1 failed check at tests/true.cmdt.fail:1
+1 failed check at tests/true.cmdt.fail:2
 1 $ true
 1 expected exit code 1, but got 0
 ? 1
 
 $ transcript check tests/false.cmdt.fail
-1 failed check at tests/false.cmdt.fail:1
+1 failed check at tests/false.cmdt.fail:2
 1 $ false
 1 expected exit code 0, but got 1
 ? 1
 
+# Failure is be reported on line 1, despite the fact
+# that we can't know that until line 5.
 $ transcript check tests/implicit-exit-0.cmdt.fail
 1 failed check at tests/implicit-exit-0.cmdt.fail:1
 1 $ false

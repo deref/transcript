@@ -1,2 +1,3 @@
+# Intentionally mismatched output assertion.
 $ echo actual
 1 expected

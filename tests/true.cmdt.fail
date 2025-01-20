@@ -1,2 +1,3 @@
+# Intentionally incorrect exit code assertion.
 $ true
 ? 1

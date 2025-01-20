@@ -1,1 +1,2 @@
+# Intentionally missing non-zero exit code assertion.
 $ false
