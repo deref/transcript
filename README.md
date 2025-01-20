@@ -62,6 +62,8 @@ transcript check example.cmdt
 
 Check returns a non-zero exit code if any check failures or other errors occur.
 
+It is treated as an error if there are no files to check.
+
 ## Update
 
 When the CLI tools under test are modified, the quickest way to update test

@@ -18,6 +18,10 @@ var checkCmd = &cobra.Command{
 	Use:   "check <transcripts...>",
 	Short: "Checks transcript files",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			warnf("no transcripts to check")
+			os.Exit(1)
+		}
 		ctx := cmd.Context()
 		failures := 0
 		for _, filename := range args {
