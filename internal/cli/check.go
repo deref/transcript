@@ -53,13 +53,15 @@ func checkFile(ctx context.Context, filename string) (ok bool, err error) {
 	if errors.As(err, &chkErr) {
 		fmt.Printf("failed check at %s:%d\n", filename, chkErr.Lineno)
 		fmt.Printf("$ %s\n", chkErr.Command)
-		fmt.Println(chkErr.Err.Error())
-		var diffErr core.DiffError
-		if errors.As(err, &diffErr) {
-			if color {
-				fmt.Print(diffErr.Color())
-			} else {
-				fmt.Print(diffErr.Plain())
+		for _, err := range chkErr.Errs {
+			fmt.Println(err.Error())
+			var diffErr core.DiffError
+			if errors.As(err, &diffErr) {
+				if color {
+					fmt.Print(diffErr.Color())
+				} else {
+					fmt.Print(diffErr.Plain())
+				}
 			}
 		}
 		return false, nil

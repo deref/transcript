@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"iter"
 	"strings"
@@ -14,15 +13,11 @@ import (
 type CommandCheckError struct {
 	Command string
 	Lineno  int
-	Err     error
-}
-
-func (err CommandCheckError) Unwrap() error {
-	return err.Err
+	Errs    []error
 }
 
 func (err CommandCheckError) Error() string {
-	return fmt.Sprintf("check failed: %v", err.Err)
+	return "command checks failed"
 }
 
 type DiffError struct {

@@ -8,7 +8,7 @@ $ transcript check tests/output.cmdt.fail
 1 output differs
 1 --- expected
 1 +++ actual
-1 @@ -1,2 +1,2 @@
+1 @@ -1 +1 @@
 1 -1 expected
 1 +1 actual
 ? 1
@@ -30,5 +30,20 @@ $ transcript check tests/false.cmdt.fail
 $ transcript check tests/implicit-exit-0.cmdt.fail
 1 failed check at tests/implicit-exit-0.cmdt.fail:1
 1 $ false
+1 expected exit code 0, but got 1
+? 1
+
+# Ensures that both diff and wrong status are reported at once.
+$ transcript check tests/bad-output-and-status.cmdt.fail
+1 failed check at tests/bad-output-and-status.cmdt.fail:2
+1 $ (echo "out"; echo "err" 1>&2; false)
+1 output differs
+1 --- expected
+1 +++ actual
+1 @@ -1,2 +1,2 @@
+1 -1 abc
+1 +1 out
+1 -2 xyz
+1 +2 err
 1 expected exit code 0, but got 1
 ? 1

@@ -18,10 +18,12 @@ func Check(t *testing.T, r io.Reader) (ok bool) {
 	if errors.As(err, &chkErr) {
 		t.Logf("failed check on line %d:", chkErr.Lineno)
 		t.Logf("$ %s", chkErr.Command)
-		t.Log(chkErr.Err.Error())
-		var diffErr core.DiffError
-		if errors.As(err, &diffErr) {
-			t.Log(diffErr.Plain())
+		for _, err := range chkErr.Errs {
+			t.Logf("check failed: %s", err.Error())
+			var diffErr core.DiffError
+			if errors.As(err, &diffErr) {
+				t.Log(diffErr.Plain())
+			}
 		}
 		t.Fail()
 		return false

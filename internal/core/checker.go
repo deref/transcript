@@ -75,20 +75,28 @@ func (ckr *Checker) HandleEnd(ctx context.Context) error {
 		ckr.expectedExitCode = 0
 	}()
 
-	if ckr.expectedExitCode != ckr.actualResult.ExitCode {
-		return ckr.commandCheckError(fmt.Errorf("expected exit code %d, but got %d", ckr.expectedExitCode, ckr.actualResult.ExitCode))
-	}
+	var errs []error
 
 	expectedOutput := ckr.expectedOutput.String()
 	actualOutput := string(ckr.actualResult.Output)
 	if expectedOutput != actualOutput {
 		//fmt.Printf("expected: %q\nactual: %q\n", expectedOutput, actualOutput)
-		return ckr.commandCheckError(DiffError{
+		errs = append(errs, DiffError{
 			Expected: expectedOutput,
 			Actual:   actualOutput,
 		})
 	}
 
+	if ckr.expectedExitCode != ckr.actualResult.ExitCode {
+		errs = append(errs,
+			fmt.Errorf("expected exit code %d, but got %d",
+				ckr.expectedExitCode,
+				ckr.actualResult.ExitCode))
+	}
+
+	if len(errs) > 0 {
+		return ckr.commandCheckError(errs...)
+	}
 	return nil
 }
 
@@ -101,10 +109,10 @@ func (ckr *Checker) syntaxErrorf(message string, v ...any) error {
 	return fmt.Errorf("syntax error on line %d: "+message, append([]any{ckr.interpreter.Lineno}, v...))
 }
 
-func (ckr *Checker) commandCheckError(err error) CommandCheckError {
+func (ckr *Checker) commandCheckError(errs ...error) CommandCheckError {
 	return CommandCheckError{
 		Command: ckr.interpreter.Command,
 		Lineno:  ckr.interpreter.CommandLineno,
-		Err:     err,
+		Errs:    errs,
 	}
 }
