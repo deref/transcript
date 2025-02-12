@@ -2,7 +2,7 @@
 
 `transcript` is a CLI tool for snapshot testing other CLI tools.
 
-The snapshot files -- called "transcripts" -- are designed to be easily human-readable
+The snapshot files &mdash; called "transcripts" &mdash; are designed to be easily human-readable
 and reasonably human-writable, without sacrificing precise assertions about the behavior of
 the tool under test. In practice, most transcripts can be authored interactively
 and maintained in an automated way.
@@ -137,8 +137,7 @@ Operations with the following opcodes are supported:
     </p>
     <p>
       Output lines are matched exactly. More flexible matching may be
-      configured by <code>%</code> directives in a future version of
-      Transcript.
+      configured by <code>%</code> directives.
     </p>
     <p>
       Transcript checking assumes that the interleaving of stdout and stderr
