@@ -6,6 +6,7 @@ package main_test
 import (
 	"embed"
 	"io/fs"
+	"os"
 	"strings"
 	"testing"
 
@@ -17,7 +18,14 @@ import (
 var tests embed.FS
 
 func TestTranscript(t *testing.T) {
-	err := fs.WalkDir(tests, "tests", func(path string, d fs.DirEntry, err error) error {
+	// Change to tests directory to match behavior of test.sh
+	err := os.Chdir("tests")
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer os.Chdir("..")
+
+	err = fs.WalkDir(tests, "tests", func(path string, d fs.DirEntry, err error) error {
 		if !assert.NoError(t, err) {
 			return err
 		}

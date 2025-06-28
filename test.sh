@@ -11,13 +11,16 @@ if [[ $(which transcript) != "$PWD/bin/transcript" ]]; then
   exit 1
 fi
 
-# All the "*.cmdt" files are used directly as tests.
-# The "*.fail" tests are run indirectly by 'meta.cmdt'.
-tests=$(find ./tests -name '*.cmdt')
-
 ./build.sh
 
 set -x
 
-transcript check $tests
+# Run transcript checks from within the tests directory
+# All the "*.cmdt" files are used directly as tests.
+# The "*.fail" tests are run indirectly by 'meta.cmdt'.
+(
+  cd tests
+  transcript check *.cmdt
+)
+
 go test -v ./...

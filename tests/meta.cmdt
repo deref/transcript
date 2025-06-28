@@ -1,9 +1,9 @@
 # When fiddling with these meta tests, it may help to `export CLICOLOR=0`.
 
-$ transcript check tests/basics.cmdt
+$ transcript check basics.cmdt
 
-$ transcript check tests/output.cmdt.fail
-1 failed check at tests/output.cmdt.fail:2
+$ transcript check output.cmdt.fail
+1 failed check at output.cmdt.fail:2
 1 $ echo actual
 1 output differs
 1 --- expected
@@ -13,29 +13,29 @@ $ transcript check tests/output.cmdt.fail
 1 +1 actual
 ? 1
 
-$ transcript check tests/true.cmdt.fail
-1 failed check at tests/true.cmdt.fail:2
+$ transcript check true.cmdt.fail
+1 failed check at true.cmdt.fail:2
 1 $ true
 1 expected exit code 1, but got 0
 ? 1
 
-$ transcript check tests/false.cmdt.fail
-1 failed check at tests/false.cmdt.fail:2
+$ transcript check false.cmdt.fail
+1 failed check at false.cmdt.fail:2
 1 $ false
 1 expected exit code 0, but got 1
 ? 1
 
 # Failure is be reported on line 1, despite the fact
 # that we can't know that until line 5.
-$ transcript check tests/implicit-exit-0.cmdt.fail
-1 failed check at tests/implicit-exit-0.cmdt.fail:1
+$ transcript check implicit-exit-0.cmdt.fail
+1 failed check at implicit-exit-0.cmdt.fail:1
 1 $ false
 1 expected exit code 0, but got 1
 ? 1
 
 # Ensures that both diff and wrong status are reported at once.
-$ transcript check tests/bad-output-and-status.cmdt.fail
-1 failed check at tests/bad-output-and-status.cmdt.fail:2
+$ transcript check bad-output-and-status.cmdt.fail
+1 failed check at bad-output-and-status.cmdt.fail:2
 1 $ (echo "out"; echo "err" 1>&2; false)
 1 output differs
 1 --- expected

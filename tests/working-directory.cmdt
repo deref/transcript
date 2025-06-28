@@ -1,0 +1,38 @@
+# Test working directory behavior
+# 
+# This test validates that:
+# 1. Transcript inherits the working directory from the process that launches it
+# 2. Directory changes with 'cd' persist within a transcript session
+# 3. Relative paths work correctly from changed directories
+# 4. Complex commands work across directory changes
+
+# Test: Check that we start in the tests directory
+$ basename "$(pwd)"
+1 tests
+
+# Test: Navigate to existing test directory
+$ cd wd-test
+
+# Test: Verify directory change persisted and relative paths work
+$ basename "$(pwd)"
+1 wd-test
+$ cat test-file.txt
+1 test content
+% no-newline
+
+# Test: Navigate deeper and verify relative access to parent
+$ cd subdir
+$ basename "$(pwd)"
+1 subdir
+$ cat ../test-file.txt
+1 test content
+% no-newline
+
+# Test: Complex commands with directory context
+$ cd .. && echo "$(basename $(pwd)): $(cat test-file.txt | wc -w | tr -d ' ')"
+1 wd-test: 2
+
+# Test: Return to tests directory
+$ cd ..
+$ basename "$(pwd)"
+1 tests

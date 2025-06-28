@@ -188,6 +188,12 @@ is terminated with a synthetic newline. That is, the recorded output did not
 have a newline and the checker should strip the synthetic newline before
 checking against test output.
 
+## Working Directory
+
+Transcript inherits the working directory from the process that launches it.
+Directory changes (such as `cd` commands) persist throughout the transcript
+session, allowing tests to navigate and use relative paths consistently.
+
 # Go API
 
 In addition to the `transcript` CLI, there is a Go API for users who wish to
