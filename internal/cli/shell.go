@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/deref/transcript/internal/interactive"
@@ -36,7 +35,7 @@ If --output is not specified, a tempfile will be written.
 		var file *os.File
 		var err error
 		if shellFlags.OutputPath == "" {
-			file, err = ioutil.TempFile("", "transcript")
+			file, err = os.CreateTemp("", "transcript")
 		} else {
 			file, err = os.OpenFile(shellFlags.OutputPath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0600)
 		}

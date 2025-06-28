@@ -3,7 +3,6 @@ package core
 import (
 	"bytes"
 	"io"
-	"iter"
 	"strings"
 
 	"github.com/akedrou/textdiff"
@@ -35,7 +34,7 @@ func (err DiffError) Plain() string {
 
 func (err DiffError) Color() string {
 	var buf bytes.Buffer
-	for line := range lines(err.Plain()) {
+	for line := range strings.Lines(err.Plain()) {
 		switch {
 		case strings.HasPrefix(line, "---"):
 			yellow.Fprintf(&buf, "%s", line)
@@ -59,26 +58,3 @@ var cyan = color.New(color.FgCyan)
 var green = color.New(color.FgGreen)
 var red = color.New(color.FgRed)
 
-// Borrowed from the future: Go 1.24 gains this function.
-//
-// Lines returns an iterator over the newline-terminated lines in the string s.
-// The lines yielded by the iterator include their terminating newlines.
-// If s is empty, the iterator yields no lines at all.
-// If s does not end in a newline, the final yielded line will not end in a newline.
-// It returns a single-use iterator.
-func lines(s string) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for len(s) > 0 {
-			var line string
-			if i := strings.IndexByte(s, '\n'); i >= 0 {
-				line, s = s[:i+1], s[i+1:]
-			} else {
-				line, s = s, ""
-			}
-			if !yield(line) {
-				return
-			}
-		}
-		return
-	}
-}
