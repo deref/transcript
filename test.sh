@@ -20,3 +20,4 @@ tests=$(find ./tests -name '*.cmdt')
 set -x
 
 transcript check $tests
+go test -v ./...

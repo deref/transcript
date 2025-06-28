@@ -1,0 +1,1 @@
+- Build with `./build.sh` instead of using `go build` directly.
