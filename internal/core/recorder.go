@@ -11,10 +11,14 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 )
 
+// Recorder is a shell Interpreter that captures a command transcript
+// into the Transcript byte buffer.
 type Recorder struct {
+	// If provided, tees Stdout to this writer in addition to the buffer.
 	Stdout io.Writer
+	// If provided, tees Stderr to this writer in addition to the buffer.
 	Stderr io.Writer
-
+	// Transcript captures the recorded output in cmdt format.
 	Transcript bytes.Buffer
 
 	needsBlank bool
@@ -25,11 +29,12 @@ type Recorder struct {
 
 func (rec *Recorder) Init() error {
 	var err error
+	syncedTranscript := newSyncWriter(&rec.Transcript)
 	rec.stdout = &lineBufferingWriter{
-		W: newPrefixingWriter("1", " ", &rec.Transcript),
+		W: newPrefixingWriter("1", " ", syncedTranscript),
 	}
 	rec.stderr = &lineBufferingWriter{
-		W: newPrefixingWriter("2", " ", &rec.Transcript),
+		W: newPrefixingWriter("2", " ", syncedTranscript),
 	}
 	rec.runner, err = interp.New(
 		interp.StdIO(nil,
