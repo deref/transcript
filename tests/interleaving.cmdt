@@ -1,0 +1,5 @@
+$ interleave
+2 stderr line 1
+2 stderr line 2
+1 stdout line 1
+1 stdout line 2

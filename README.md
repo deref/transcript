@@ -140,12 +140,10 @@ Operations with the following opcodes are supported:
       configured by <code>%</code> directives.
     </p>
     <p>
-      Transcript checking assumes that the interleaving of stdout and stderr
-      lines is significant and that output lines are written atomically.
-      The ordering of concurrent writes to both streams is undefined, which
-      will lead to flakey tests. Incrementally written lines will be buffered,
-      which may mask text interleaving issues that would affect users. Both of
-      these shortcomings may be mitigated in the future.
+      Transcript uses deterministic ordering: stderr first, then stdout.
+      True chronological interleaving cannot be preserved due to OS pipe
+      buffering. Programs requiring chronological order should redirect
+      stderr to stdout (e.g., <code>2>&1</code>).
     </p>
   </dd>
 

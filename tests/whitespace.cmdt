@@ -16,9 +16,9 @@ $ printf 'xyz' 1>&2
 
 # Both stdout and stderr, neither have a newline.
 $ (printf 'abc'; (printf 'xyz' 1>&2))
-1 abc
-% no-newline
 2 xyz
+% no-newline
+1 abc
 % no-newline
 
 # Exit status assertions go after no-newline directive.

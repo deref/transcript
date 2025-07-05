@@ -42,8 +42,8 @@ $ transcript check bad-output-and-status.cmdt.fail
 1 +++ actual
 1 @@ -1,2 +1,2 @@
 1 -1 abc
-1 +1 out
-1 -2 xyz
 1 +2 err
+1 -2 xyz
+1 +1 out
 1 expected exit code 0, but got 1
 ? 1

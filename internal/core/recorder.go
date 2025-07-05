@@ -23,23 +23,16 @@ type Recorder struct {
 
 	needsBlank bool
 	runner     *interp.Runner
-	stdout     *lineBufferingWriter
-	stderr     *lineBufferingWriter
+	stdoutBuf  bytes.Buffer
+	stderrBuf  bytes.Buffer
 }
 
 func (rec *Recorder) Init() error {
 	var err error
-	syncedTranscript := newSyncWriter(&rec.Transcript)
-	rec.stdout = &lineBufferingWriter{
-		W: newPrefixingWriter("1", " ", syncedTranscript),
-	}
-	rec.stderr = &lineBufferingWriter{
-		W: newPrefixingWriter("2", " ", syncedTranscript),
-	}
 	rec.runner, err = interp.New(
 		interp.StdIO(nil,
-			io.MultiWriter(rec.stdout, orDiscard(rec.Stdout)),
-			io.MultiWriter(rec.stderr, orDiscard(rec.Stderr)),
+			io.MultiWriter(&rec.stdoutBuf, orDiscard(rec.Stdout)),
+			io.MultiWriter(&rec.stderrBuf, orDiscard(rec.Stderr)),
 		))
 	return err
 }
@@ -52,24 +45,41 @@ func orDiscard(w io.Writer) io.Writer {
 }
 
 func (rec *Recorder) flush() error {
-	if err := rec.flushStream(rec.stdout); err != nil {
+	// Write stderr first (usually empty, text-only, important not to miss).
+	if err := rec.flushBuffer(&rec.stderrBuf, "2"); err != nil {
 		return err
 	}
-	if err := rec.flushStream(rec.stderr); err != nil {
+	// Then write stdout.
+	if err := rec.flushBuffer(&rec.stdoutBuf, "1"); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (rec *Recorder) flushStream(w *lineBufferingWriter) error {
-	if err := w.Flush(); err != nil {
-		return err
+func (rec *Recorder) flushBuffer(buf *bytes.Buffer, prefix string) error {
+	if buf.Len() == 0 {
+		return nil
 	}
-	n := rec.Transcript.Len()
-	if n > 0 && rec.Transcript.Bytes()[n-1] != '\n' {
-		w.Write([]byte{'\n'})
-		io.WriteString(&rec.Transcript, "% no-newline\n")
+	
+	data := buf.Bytes()
+	buf.Reset()
+	
+	// Add prefix to each line and write to transcript.
+	for line := range bytes.Lines(data) {
+		if len(line) == 1 && line[0] == '\n' {
+			// Empty line - just prefix.
+			fmt.Fprintf(&rec.Transcript, "%s\n", prefix)
+		} else {
+			// Non-empty line - prefix + space + line.
+			fmt.Fprintf(&rec.Transcript, "%s %s", prefix, line)
+		}
 	}
+	
+	// Handle case where original didn't end with newline.
+	if len(data) > 0 && data[len(data)-1] != '\n' {
+		io.WriteString(&rec.Transcript, "\n% no-newline\n")
+	}
+	
 	return nil
 }
 
