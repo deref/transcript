@@ -24,12 +24,34 @@ type Interpreter struct {
 	prevFD        int // stdout (1), stderr (2) or none (0).
 }
 
+// Handler provides callbacks for processing transcript operations.
+// Each method corresponds to a specific cmdt opcode or interpreter event.
 type Handler interface {
+	// HandleComment processes comment lines and blank lines.
+	// Corresponds to cmdt syntax: "# comment text" or blank lines.
 	HandleComment(ctx context.Context, text string) error
+
+	// HandleRun executes a shell command.
+	// Corresponds to cmdt syntax: "$ command args".
 	HandleRun(ctx context.Context, command string) error
+
+	// HandleOutput processes expected output from a command.
+	// The fd parameter indicates the file descriptor: 1 for stdout, 2 for stderr.
+	// Corresponds to cmdt syntax: "1 stdout line" or "2 stderr line".
 	HandleOutput(ctx context.Context, fd int, line string) error
+
+	// HandleNoNewline indicates that the last output line did not end with a newline.
+	// The fd parameter indicates which stream (stdout=1, stderr=2) lacks the newline.
+	// Corresponds to cmdt syntax: "% no-newline".
 	HandleNoNewline(ctx context.Context, fd int) error
+
+	// HandleExitCode processes the expected exit code of a command.
+	// If omitted in the transcript, the exit code defaults to 0.
+	// Corresponds to cmdt syntax: "? exitcode".
 	HandleExitCode(ctx context.Context, exitCode int) error
+
+	// HandleEnd is called after a command and all its assertions have been processed.
+	// This method has no direct cmdt syntax equivalent but signals command completion.
 	HandleEnd(ctx context.Context) error
 }
 
