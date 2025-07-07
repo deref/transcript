@@ -1,0 +1,4 @@
+$ cat my-custom.bin
+1< my-custom.bin
+$ cat stderr-custom.bin >&2
+2< stderr-custom.bin

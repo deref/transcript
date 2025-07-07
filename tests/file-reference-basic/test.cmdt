@@ -1,0 +1,5 @@
+# Test basic file reference functionality
+
+# Reference a pre-existing binary file
+$ cat custom.bin  
+1< 001.bin

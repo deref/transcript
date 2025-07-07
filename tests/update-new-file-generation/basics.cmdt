@@ -1,0 +1,9 @@
+$ echo stdout
+1 stdout
+
+$ echo stderr 1>&2
+2 stderr
+
+# Non-zero exit codes.
+$ false
+? 1

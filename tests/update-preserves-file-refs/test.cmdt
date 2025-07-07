@@ -1,0 +1,8 @@
+# Test that update preserves existing file references during updates
+
+# Update the transcript - should preserve the custom filenames
+$ transcript update test-transcript.cmdt --dry-run
+1 $ cat my-custom.bin
+1 1< my-custom.bin
+1 $ cat stderr-custom.bin >&2
+1 2< stderr-custom.bin

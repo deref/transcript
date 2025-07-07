@@ -16,11 +16,16 @@ fi
 set -x
 
 # Run transcript checks from within the tests directory
-# All the "*.cmdt" files are used directly as tests.
+# All test.cmdt files in subdirectories are the actual tests.
 # The "*.fail" tests are run indirectly by 'meta.cmdt'.
 (
   cd tests
-  transcript check *.cmdt
+  # Find all test.cmdt files and run each from its own directory
+  find . -name "test.cmdt" | sort | while read testfile; do
+    testdir=$(dirname "$testfile")
+    echo "Running test in $testdir"
+    (cd "$testdir" && transcript check test.cmdt)
+  done
 )
 
 go test -v ./...

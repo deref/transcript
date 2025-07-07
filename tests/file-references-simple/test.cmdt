@@ -1,11 +1,5 @@
 # Test file references work with existing files
 
-# Create a text file
-$ echo "test content" > text.txt
-
-# Create a small binary file
-$ echo -e "a\x01\x02\x03b" > small.bin
-
 # Reference text file should work inline
 $ cat text.txt
 1 test content
@@ -13,6 +7,3 @@ $ cat text.txt
 # Reference binary file should work with file opcode
 $ cat small.bin
 1< 001.bin
-
-# Clean up
-$ rm text.txt small.bin

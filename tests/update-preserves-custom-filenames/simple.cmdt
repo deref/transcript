@@ -1,0 +1,4 @@
+$ cat data.bin
+1< data.bin
+$ cat document.dat >&2
+2< document.dat

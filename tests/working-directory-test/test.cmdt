@@ -6,9 +6,9 @@
 # 3. Relative paths work correctly from changed directories
 # 4. Complex commands work across directory changes
 
-# Test: Check that we start in the tests directory
+# Test: Check that we start in the working-directory-test directory  
 $ basename "$(pwd)"
-1 tests
+1 working-directory-test
 
 # Test: Navigate to existing test directory
 $ cd wd-test
@@ -32,7 +32,7 @@ $ cat ../test-file.txt
 $ cd .. && echo "$(basename $(pwd)): $(cat test-file.txt | wc -w | tr -d ' ')"
 1 wd-test: 2
 
-# Test: Return to tests directory
+# Test: Return to working-directory-test directory
 $ cd ..
 $ basename "$(pwd)"
-1 tests
+1 working-directory-test
