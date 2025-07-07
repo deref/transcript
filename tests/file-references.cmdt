@@ -1,0 +1,11 @@
+# Test manual file references with custom names
+
+# Create a simple text file for testing
+$ echo "test content" > test.txt
+
+# Reference the file manually (assuming it contains text)
+$ cat test.txt
+1 test content
+
+# Clean up  
+$ rm test.txt

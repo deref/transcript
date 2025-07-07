@@ -40,6 +40,12 @@ type Handler interface {
 	// Corresponds to cmdt syntax: "1 stdout line" or "2 stderr line".
 	HandleOutput(ctx context.Context, fd int, line string) error
 
+	// HandleFileOutput processes expected output that references an external file.
+	// The fd parameter indicates the file descriptor: 1 for stdout, 2 for stderr.
+	// The filepath parameter specifies the file containing the expected output.
+	// Corresponds to cmdt syntax: "1< filename" or "2< filename".
+	HandleFileOutput(ctx context.Context, fd int, filepath string) error
+
 	// HandleNoNewline indicates that the last output line did not end with a newline.
 	// The fd parameter indicates which stream (stdout=1, stderr=2) lacks the newline.
 	// Corresponds to cmdt syntax: "% no-newline".
@@ -98,6 +104,14 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 		fd := int(opcode[0]) - '1' + 1
 		t.prevFD = fd
 		return hdlr.HandleOutput(ctx, fd, payload)
+
+	case "1<", "2<":
+		if !t.acceptResults {
+			return t.syntaxErrorf("unexpected file output check")
+		}
+		fd := int(opcode[0]) - '1' + 1
+		t.prevFD = fd
+		return hdlr.HandleFileOutput(ctx, fd, payload)
 
 	case "?":
 		if !t.acceptResults {

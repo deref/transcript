@@ -1,0 +1,29 @@
+# Test binary output detection and file creation
+
+# Normal text output should stay inline
+$ printf "hello world"
+1 hello world
+% no-newline
+
+# Binary output with high unprintable ratio should create file
+$ printf "hello\x01\x02\x03\x04\x05world"
+1< 001.bin
+
+# Text to stderr should stay inline
+$ printf "error message" >&2
+2 error message
+% no-newline
+
+# Binary to stderr should create file  
+$ printf "binary\x01\x02\x03error" >&2
+2< 002.bin
+
+# Mixed output - text to stdout, binary to stderr in single command
+$ (printf "text output"; printf "binary\x01\x02stderr" >&2)
+2< 003.bin
+1 text output
+% no-newline
+
+# High ratio of unprintable characters should be binary
+$ printf "a\x01\x02\x03\x04\x05\x06\x07\x08\x09"
+1< 004.bin

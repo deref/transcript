@@ -1,0 +1,21 @@
+# Test that update preserves existing file references during updates
+
+# Create simple files to reference
+$ echo -e "binary\x01\x02data" > my-custom.bin
+$ echo -e "stderr\x01\x02binary" > stderr-custom.bin
+
+# Create a .cmdt file that references these custom files
+$ echo '$ cat my-custom.bin' > test-transcript.cmdt
+$ echo '1< my-custom.bin' >> test-transcript.cmdt
+$ echo '$ cat stderr-custom.bin >&2' >> test-transcript.cmdt
+$ echo '2< stderr-custom.bin' >> test-transcript.cmdt
+
+# Update the transcript - should preserve the custom filenames
+$ transcript update test-transcript.cmdt --dry-run
+1 $ cat my-custom.bin
+1 1< my-custom.bin
+1 $ cat stderr-custom.bin >&2
+1 2< stderr-custom.bin
+
+# Clean up
+$ rm my-custom.bin stderr-custom.bin test-transcript.cmdt

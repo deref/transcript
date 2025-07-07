@@ -1,0 +1,32 @@
+# Test the output format of update --dry-run command
+
+$ transcript update --dry-run binary-output.cmdt
+1 # Test binary output detection and file creation
+1 
+1 # Normal text output should stay inline
+1 $ printf "hello world"
+1 1 hello world
+1 % no-newline
+1 
+1 # Binary output with high unprintable ratio should create file
+1 $ printf "hello\x01\x02\x03\x04\x05world"
+1 1< 001.bin
+1 
+1 # Text to stderr should stay inline
+1 $ printf "error message" >&2
+1 2 error message
+1 % no-newline
+1 
+1 # Binary to stderr should create file  
+1 $ printf "binary\x01\x02\x03error" >&2
+1 2< 002.bin
+1 
+1 # Mixed output - text to stdout, binary to stderr in single command
+1 $ (printf "text output"; printf "binary\x01\x02stderr" >&2)
+1 2< 003.bin
+1 1 text output
+1 % no-newline
+1 
+1 # High ratio of unprintable characters should be binary
+1 $ printf "a\x01\x02\x03\x04\x05\x06\x07\x08\x09"
+1 1< 004.bin

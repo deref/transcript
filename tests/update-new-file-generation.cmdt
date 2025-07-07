@@ -1,0 +1,12 @@
+# Test that update works with simple text commands
+
+$ transcript update --dry-run basics.cmdt
+1 $ echo stdout
+1 1 stdout
+1 
+1 $ echo stderr 1>&2
+1 2 stderr
+1 
+1 # Non-zero exit codes.
+1 $ false
+1 ? 1

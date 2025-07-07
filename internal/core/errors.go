@@ -57,4 +57,3 @@ var yellow = color.New(color.FgYellow)
 var cyan = color.New(color.FgCyan)
 var green = color.New(color.FgGreen)
 var red = color.New(color.FgRed)
-

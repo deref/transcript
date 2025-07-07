@@ -147,6 +147,15 @@ Operations with the following opcodes are supported:
     </p>
   </dd>
 
+  <dt><code>1&lt;</code>, <code>2&lt;</code> &mdash; file output</dt>
+  <dd>
+    <p>
+      Like <code>1</code> and <code>2</code>, but reference a file containing
+      the expected output instead of including it inline. File paths respect
+      the current working directory.
+    </p>
+  </dd>
+
   <dt><code>?</code> &mdash; exit-code</dt>
   <dd>
     <p>Exit code of the previously run command.</p>
@@ -191,6 +200,14 @@ checking against test output.
 Transcript inherits the working directory from the process that launches it.
 Directory changes (such as `cd` commands) persist throughout the transcript
 session, allowing tests to navigate and use relative paths consistently.
+
+## Binary Output
+
+Transcript automatically detects binary output using heuristics. Lines of plain
+text are recorded inline using the standard `1` and `2` opcodes, while spans of
+binary data are written to incrementally numbered files (`001.bin`, `002.bin`,
+etc.) and referenced using `1<` and `2<` opcodes. This applies to both shell
+recording and automatic updating.
 
 # Go API
 

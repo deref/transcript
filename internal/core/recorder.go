@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"mvdan.cc/sh/v3/interp"
@@ -21,10 +22,13 @@ type Recorder struct {
 	// Transcript captures the recorded output in cmdt format.
 	Transcript bytes.Buffer
 
-	needsBlank bool
-	runner     *interp.Runner
-	stdoutBuf  bytes.Buffer
-	stderrBuf  bytes.Buffer
+	needsBlank     bool
+	runner         *interp.Runner
+	stdoutBuf      bytes.Buffer
+	stderrBuf      bytes.Buffer
+	fileCount      int      // Counter for auto-generated binary file names
+	preferredFiles []string // List of preferred filenames in order (stderr first, then stdout)
+	fileIndex      int      // Current position in preferredFiles slice
 }
 
 func (rec *Recorder) Init() error {
@@ -34,6 +38,8 @@ func (rec *Recorder) Init() error {
 			io.MultiWriter(&rec.stdoutBuf, orDiscard(rec.Stdout)),
 			io.MultiWriter(&rec.stderrBuf, orDiscard(rec.Stderr)),
 		))
+	rec.preferredFiles = make([]string, 0)
+	rec.fileIndex = 0
 	return err
 }
 
@@ -44,42 +50,78 @@ func orDiscard(w io.Writer) io.Writer {
 	return w
 }
 
+// SetPreferredFiles sets the list of preferred filenames in order.
+// Files should be provided in deterministic order (stderr first, then stdout).
+func (rec *Recorder) SetPreferredFiles(files []string) {
+	rec.preferredFiles = make([]string, len(files))
+	copy(rec.preferredFiles, files)
+	rec.fileIndex = 0
+}
+
+// generateBinaryFilename creates a filename, preferring existing names when available.
+// Uses deterministic ordering (stderr first, then stdout) to consume preferred filenames.
+func (rec *Recorder) generateBinaryFilename() string {
+	// Check if we have a preferred filename available.
+	if rec.fileIndex < len(rec.preferredFiles) {
+		filename := rec.preferredFiles[rec.fileIndex]
+		rec.fileIndex++
+		return filename
+	}
+
+	// Fall back to auto-generated filename.
+	rec.fileCount++
+	return fmt.Sprintf("%03d.bin", rec.fileCount)
+}
+
 func (rec *Recorder) flush() error {
 	// Write stderr first (usually empty, text-only, important not to miss).
-	if err := rec.flushBuffer(&rec.stderrBuf, "2"); err != nil {
+	if err := rec.flushBuffer(&rec.stderrBuf, 2); err != nil {
 		return err
 	}
 	// Then write stdout.
-	if err := rec.flushBuffer(&rec.stdoutBuf, "1"); err != nil {
+	if err := rec.flushBuffer(&rec.stdoutBuf, 1); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (rec *Recorder) flushBuffer(buf *bytes.Buffer, prefix string) error {
+// flushBuffer processes output from a command and writes it to the transcript.
+// Individual command outputs are expected to be reasonably small (not streaming large files).
+func (rec *Recorder) flushBuffer(buf *bytes.Buffer, fd int) error {
 	if buf.Len() == 0 {
 		return nil
 	}
-	
+
 	data := buf.Bytes()
 	buf.Reset()
-	
-	// Add prefix to each line and write to transcript.
+
+	// Check if data is binary.
+	if isBinary(data) {
+		// Write binary data to file and reference it.
+		filename := rec.generateBinaryFilename()
+		if err := os.WriteFile(filename, data, 0644); err != nil {
+			return fmt.Errorf("writing binary file %q: %w", filename, err)
+		}
+		fmt.Fprintf(&rec.Transcript, "%d< %s\n", fd, filename)
+		return nil
+	}
+
+	// Handle text output - add prefix to each line and write to transcript.
 	for line := range bytes.Lines(data) {
 		if len(line) == 1 && line[0] == '\n' {
 			// Empty line - just prefix.
-			fmt.Fprintf(&rec.Transcript, "%s\n", prefix)
+			fmt.Fprintf(&rec.Transcript, "%d\n", fd)
 		} else {
 			// Non-empty line - prefix + space + line.
-			fmt.Fprintf(&rec.Transcript, "%s %s", prefix, line)
+			fmt.Fprintf(&rec.Transcript, "%d %s", fd, line)
 		}
 	}
-	
+
 	// Handle case where original didn't end with newline.
 	if len(data) > 0 && data[len(data)-1] != '\n' {
 		io.WriteString(&rec.Transcript, "\n% no-newline\n")
 	}
-	
+
 	return nil
 }
 

@@ -1,0 +1,6 @@
+# Test that update handles invalid transcript files gracefully
+
+$ transcript update --dry-run nonexistent-file.cmdt
+2 error: updating "nonexistent-file.cmdt": open nonexistent-file.cmdt: no such file or directory
+2
+? 1

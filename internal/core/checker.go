@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 )
 
 type Checker struct {
@@ -53,6 +55,36 @@ func (ckr *checkHandler) HandleOutput(ctx context.Context, fd int, line string) 
 		sep = " "
 	}
 	return ckr.expectOutput(fmt.Sprintf("%d%s%s", fd, sep, line))
+}
+
+func (ckr *checkHandler) HandleFileOutput(ctx context.Context, fd int, filepath string) error {
+	// Read the expected file content.
+	expectedData, err := os.ReadFile(filepath)
+	if err != nil {
+		return fmt.Errorf("reading expected file %s: %w", filepath, err)
+	}
+
+	// Build the expected output string that would be generated if this was inline.
+	if isBinary(expectedData) {
+		// For binary files, we expect the file reference format.
+		expectedOutput := fmt.Sprintf("%d< %s", fd, filepath)
+		return ckr.expectOutput(expectedOutput)
+	} else {
+		// For text files, we expect the inline format.
+		var builder strings.Builder
+		for line := range bytes.Lines(expectedData) {
+			if len(line) == 1 && line[0] == '\n' {
+				fmt.Fprintf(&builder, "%d\n", fd)
+			} else {
+				fmt.Fprintf(&builder, "%d %s", fd, line)
+			}
+		}
+		// Handle case where original didn't end with newline.
+		if len(expectedData) > 0 && expectedData[len(expectedData)-1] != '\n' {
+			builder.WriteString("\n% no-newline\n")
+		}
+		return ckr.expectOutput(builder.String())
+	}
 }
 
 func (ckr *checkHandler) HandleNoNewline(ctx context.Context, fd int) error {
