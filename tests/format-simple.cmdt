@@ -1,0 +1,21 @@
+# Test simple format command
+
+# Create a file with whitespace and formatting issues
+$ cat > test.cmdt <<'EOF'
+#comment
+$ echo test   
+1 test
+   #another comment   
+? 0
+EOF
+
+# Format it and show the result
+$ transcript format --dry-run test.cmdt
+1 # comment
+1 $ echo test
+1 1 test
+1 # another comment
+1 ? 0
+
+# Clean up
+$ rm test.cmdt

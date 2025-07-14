@@ -1,0 +1,12 @@
+# Test basic formatting
+
+$ echo hello
+1 hello
+
+
+$ echo world
+1 world
+
+# Comment with irregular spacing
+$ false
+? 1
