@@ -9,8 +9,8 @@ $ echo test
 ? 0
 EOF
 
-# Format it and show the result
-$ transcript format --dry-run test.cmdt
+# Format it using stdin/stdout
+$ transcript format < test.cmdt
 1 # comment
 1 $ echo test
 1 1 test

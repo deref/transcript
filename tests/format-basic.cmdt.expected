@@ -3,6 +3,7 @@
 $ echo hello
 1 hello
 
+# Multiple blank lines should be normalized
 
 $ echo world
 1 world

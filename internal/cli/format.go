@@ -12,26 +12,26 @@ import (
 )
 
 func init() {
-	formatCmd.Flags().BoolVarP(&formatFlags.DryRun, "dry-run", "n", false, "dry run")
 	rootCmd.AddCommand(formatCmd)
 }
 
-var formatFlags struct {
-	DryRun bool
-}
-
 var formatCmd = &cobra.Command{
-	Use:   "format <transcripts...>",
+	Use:   "format [transcripts...]",
 	Short: "Formats transcript files",
 	Long: `Formats transcript files by normalizing comments, blank lines,
 trailing whitespace (except in command output), trailing newline,
 and special directive syntax.
 
-Transcript files are formatted in-place, unless --dry-run is specified. In a dry
-run, the formatted output is printed to stdout instead.
+If no files are provided, reads from stdin and writes to stdout.
+If files are provided, formats them in-place.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
+		if len(args) == 0 {
+			// Read from stdin, write to stdout
+			return formatStdin(ctx)
+		}
+		// Format files in-place
 		for _, filename := range args {
 			if err := formatFile(ctx, filename); err != nil {
 				return fmt.Errorf("formatting %q: %w", filename, err)
@@ -39,6 +39,16 @@ run, the formatted output is printed to stdout instead.
 		}
 		return nil
 	},
+}
+
+func formatStdin(ctx context.Context) error {
+	formatter := &core.Formatter{}
+	transcript, err := formatter.FormatTranscript(ctx, os.Stdin)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(os.Stdout, transcript)
+	return err
 }
 
 func formatFile(ctx context.Context, filename string) error {
@@ -51,10 +61,6 @@ func formatFile(ctx context.Context, filename string) error {
 	formatter := &core.Formatter{}
 	transcript, err := formatter.FormatTranscript(ctx, f)
 	if err != nil {
-		return err
-	}
-	if formatFlags.DryRun {
-		_, err := io.Copy(os.Stdout, transcript)
 		return err
 	}
 	return atomic.WriteFile(filename, transcript)

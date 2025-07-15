@@ -13,8 +13,8 @@ $ false
 ? 1  
 EOF
 
-# Test dry-run format
-$ transcript format --dry-run unformatted.cmdt
+# Test stdin/stdout formatting
+$ transcript format < unformatted.cmdt
 1 # comment without space
 1 
 1 $ echo hello
