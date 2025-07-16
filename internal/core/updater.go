@@ -35,19 +35,19 @@ func (upr *Updater) flushCurrentCommand(ctx context.Context) error {
 	if upr.currentCommand == "" {
 		return nil // No command to flush
 	}
-	
+
 	// Set up recorder with file references for this command
 	upr.rec.SetPreferredFiles(upr.fileRefs)
-	
+
 	// Execute the command
 	if _, err := upr.rec.RunCommand(ctx, upr.currentCommand); err != nil {
 		return err
 	}
-	
+
 	// Clear the buffer
 	upr.fileRefs = nil
 	upr.currentCommand = ""
-	
+
 	return nil
 }
 
@@ -66,7 +66,7 @@ func (upr *Updater) HandleRun(ctx context.Context, command string) error {
 	if err := upr.flushCurrentCommand(ctx); err != nil {
 		return err
 	}
-	
+
 	// Buffer this command - don't execute it yet
 	upr.currentCommand = command
 	return nil
@@ -97,4 +97,3 @@ func (upr *Updater) HandleEnd(ctx context.Context) error {
 	// Flush any remaining command at the end
 	return upr.flushCurrentCommand(ctx)
 }
-

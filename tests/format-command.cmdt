@@ -1,0 +1,42 @@
+# Test format command functionality
+
+# Create a file with formatting issues
+$ cat > unformatted.cmdt <<'EOF'
+#comment without space
+
+
+$ echo hello 
+1 hello
+
+   # irregular comment spacing
+$ false   
+? 1  
+EOF
+
+# Test stdin/stdout formatting
+$ transcript format < unformatted.cmdt
+1 # comment without space
+1 
+1 $ echo hello
+1 1 hello
+1 
+1 # irregular comment spacing
+1 $ false
+1 ? 1
+
+# Test actual formatting (in-place)
+$ transcript format unformatted.cmdt
+
+# Verify the file was formatted correctly
+$ cat unformatted.cmdt
+1 # comment without space
+1 
+1 $ echo hello
+1 1 hello
+1 
+1 # irregular comment spacing
+1 $ false
+1 ? 1
+
+# Clean up
+$ rm unformatted.cmdt
