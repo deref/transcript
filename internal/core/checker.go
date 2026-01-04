@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	filepathpkg "path/filepath"
 	"strings"
 )
 
@@ -58,16 +59,24 @@ func (ckr *checkHandler) HandleOutput(ctx context.Context, fd int, line string) 
 }
 
 func (ckr *checkHandler) HandleFileOutput(ctx context.Context, fd int, filepath string) error {
+	displayPath := filepath
+	readPath := filepath
+	if ckr.rec.runner != nil && readPath != "" && !filepathpkg.IsAbs(readPath) {
+		readPath = filepathpkg.Join(ckr.rec.runner.Dir, readPath)
+	}
+
 	// Read the expected file content.
-	expectedData, err := os.ReadFile(filepath)
+	expectedData, err := os.ReadFile(readPath)
 	if err != nil {
-		return fmt.Errorf("reading expected file %s: %w", filepath, err)
+		return fmt.Errorf("reading expected file %s: %w", readPath, err)
 	}
 
 	// Build the expected output string that would be generated if this was inline.
 	if isBinary(expectedData) {
 		// For binary files, we expect the file reference format.
-		expectedOutput := fmt.Sprintf("%d< %s", fd, filepath)
+		// Keep the cmdt filepath string exactly as-written (relative paths are
+		// meaningful to users, even if we resolve them for reading).
+		expectedOutput := fmt.Sprintf("%d< %s", fd, displayPath)
 		return ckr.expectOutput(expectedOutput)
 	} else {
 		// For text files, we expect the inline format.
@@ -83,6 +92,8 @@ func (ckr *checkHandler) HandleFileOutput(ctx context.Context, fd int, filepath 
 		if len(expectedData) > 0 && expectedData[len(expectedData)-1] != '\n' {
 			builder.WriteString("\n% no-newline\n")
 		}
+		// builder already includes cmdt line terminators (the original output newlines),
+		// so write it directly to avoid adding an extra newline.
 		_, err := io.WriteString(&ckr.expectedOutput, builder.String())
 		return err
 	}
@@ -94,6 +105,15 @@ func (ckr *checkHandler) HandleNoNewline(ctx context.Context, fd int) error {
 	// match the previous line.
 	_, err := io.WriteString(&ckr.expectedOutput, "% no-newline\n")
 	return err
+}
+
+func (ckr *checkHandler) HandleDep(ctx context.Context, payload string) error {
+	if err := ckr.rec.RunDepDirective(ctx, payload); err != nil {
+		// Keep the line number here because the external driver (cmdtest) only
+		// adds line/command context for CommandCheckError today.
+		return fmt.Errorf("error on line %d: dep: %w", ckr.interpreter.Lineno, err)
+	}
+	return nil
 }
 
 func (ckr *checkHandler) HandleExitCode(ctx context.Context, exitCode int) error {

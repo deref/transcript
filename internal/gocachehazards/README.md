@@ -4,6 +4,7 @@ This package contains **tests that demonstrate `go test` caching hazards** when 
 `transcript` via the Go API (`cmdtest.Check`).
 
 These tests are intentionally written to:
+
 - run `go test` as a subprocess (twice),
 - assert whether the second run is **(cached)** or not, and
 - show where cached results can be **incorrect** unless transcript ensures
@@ -16,6 +17,7 @@ These tests are intentionally written to:
 automatically contribute to that dependency set.
 
 Transcript tests often execute subprocesses, so changes to:
+
 - environment variables,
 - input files read by subprocesses,
 - or the tool-under-test binary itself,
@@ -26,9 +28,12 @@ test process.
 ## Hazards demonstrated
 
 See `hazards_test.go` for concrete repros, including:
+
 - Env var usage not being tracked (if transcript doesn’t hit `os.LookupEnv`).
 - Subprocess file dependencies not being tracked (child reads aren’t observed).
 - Deps outside the module root being ignored by `go test` cache.
+- Executables outside the module root not being tracked by `go test` cache
+  (best practice: keep the tool binary under the module, e.g. `./bin`).
 - `open`-based tracking disabling caching for “too new” files (mtime cutoff).
 
 ## Running
@@ -38,4 +43,3 @@ From the repo root:
 ```bash
 go test ./internal/gocachehazards -count=1
 ```
-

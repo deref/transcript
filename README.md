@@ -2,10 +2,11 @@
 
 `transcript` is a CLI tool for snapshot testing other CLI tools.
 
-The snapshot files &mdash; called "transcripts" &mdash; are designed to be easily human-readable
-and reasonably human-writable, without sacrificing precise assertions about the behavior of
-the tool under test. In practice, most transcripts can be authored interactively
-and maintained in an automated way.
+The snapshot files &mdash; called "transcripts" &mdash; are designed to be
+easily human-readable and reasonably human-writable, without sacrificing
+precise assertions about the behavior of the tool under test. In practice,
+most transcripts can be authored interactively and maintained in an automated
+way.
 
 # Usage
 
@@ -99,7 +100,8 @@ primarily use the `transcript` tool to create and update transcripts.
 
 Cmdt files are line-oriented. Each line represents an instruction to the
 Transcript interpreter. Each instruction begins with an opcode, followed by a
-single space. The remainder of an instruction line forms arguments to the operation specified by the opcode.
+single space. The remainder of an instruction line forms arguments to the
+operation specified by the opcode.
 
 ## Operations
 
@@ -167,8 +169,22 @@ Operations with the following opcodes are supported:
     <p>Configures special behaviors in the Transcript interpreter.</p>
     <p>Supported directives:</p>
     <ul>
-      <li><code>no-newline</code> &mdash; Indicates that the last line of the preceding output did not end with a newline character. Applies to
-      either stdout or stderr based on what's on the opcode of the previous line.
+      <li>
+        <code>no-newline</code> &mdash; Indicates that the last line of the
+        preceding output did not end with a newline character. Applies to either
+        stdout or stderr based on what's on the opcode of the previous line.
+      </li>
+      <li>
+        <code>dep &lt;shell-args...&gt;</code> &mdash; Declares dependencies for
+        the current transcript session (primarily for Go <code>test</code>
+        caching). The arguments are parsed/expanded by the transcript shell
+        runner (so quoting and env var expansion work), then interpreted by an
+        intrinsic <code>dep</code> command:
+        arguments starting with <code>$</code>
+        are treated as environment variable names (looked up by the test
+        process), and all other arguments are treated as file paths (stat'd by
+        the test process). You can also feed a depfile via stdin redirection,
+        e.g. <code>% dep &lt; deps.txt</code>.
       </li>
     </ul>
   </dd>
@@ -238,6 +254,52 @@ There is also a `CheckString` function for small, inline tests. However, prefer
 to use `.cmdt` files so that the `transcript` tool can assist with updates and
 edits.
 
+## Go test caching notes
+
+When `cmdtest.Check` runs inside `go test`, successful package test results may
+be reused from the Go test cache. The Go cache only “sees” dependencies that
+the <em>test process</em> itself consults (for example via `os.LookupEnv` and
+`os.Stat`). If your transcript runs subprocesses that read config files or
+other inputs, declare those inputs using `% dep ...` (and/or `% dep < deps.txt`
+for depfiles) so changes reliably invalidate the cache.
+
+Also note that `go test` intentionally ignores file dependencies outside the
+module root when computing cache keys. In practice that means:
+- Prefer putting the tool-under-test binary under your module (for example
+  `./bin/mytool`) and pointing `PATH` at it.
+- If the executable comes from `/usr/local/bin`, `$HOME/bin`, `/tmp`, etc,
+  changes to that executable will not invalidate the Go test cache.
+- `go test` can also refuse to cache runs that **open** very recently modified
+  files (“too new” mtime cutoff). Prefer `% dep` (stat-based) over patterns
+  that force opens (like `< file`) when you care about caching.
+
+### `% dep` semantics
+
+- **Relative paths:** file paths passed to `% dep` (and file paths read from
+  depfiles) are resolved relative to the transcript session working directory
+  (i.e., after any `cd` commands in the transcript).
+- **Best-effort:** missing files or unset environment variables do not fail the
+  transcript check by themselves; they exist primarily to inform `go test`
+  caching and hermeticity.
+- **No shell expansion in depfiles:** depfiles are parsed as data (line-based);
+  they do not perform shell expansion.
+
+### Depfile format
+
+Depfiles are line-oriented:
+- Blank lines are ignored.
+- Lines beginning with `#` are comments.
+- Lines beginning with `$` declare environment variable dependencies (the
+  remainder of the line is the variable name).
+- All other lines declare file path dependencies (the entire line is the file
+  path).
+
+Depfiles support a minimal escaping mechanism for rare cases:
+- `\\` for a literal backslash
+- `\$` for a literal leading `$` in a file path
+- `\n` for a literal newline character in a path/name
+
 # Editor Support
 
-Editor support (for syntax highlighting) is available for [several editors](./editors).
+Editor support (for syntax highlighting) is available for [several
+editors](./editors).

@@ -8,9 +8,46 @@ import (
 	"os"
 	"strings"
 
+	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
 	"mvdan.cc/sh/v3/syntax"
 )
+
+// lookupEnv provides an environment backed by os.LookupEnv/os.Environ.
+//
+// This is important for `go test` caching: environment variables consulted by
+// the test process (via os.LookupEnv) are recorded in the "testlog" and become
+// part of the cache key. If we used a snapshot like expand.ListEnviron(os.Environ()...),
+// variable expansions would not necessarily be visible to the test cache.
+type lookupEnv struct{}
+
+func (lookupEnv) Get(name string) expand.Variable {
+	v, ok := os.LookupEnv(name)
+	if !ok {
+		return expand.Variable{}
+	}
+	return expand.Variable{
+		Kind:     expand.String,
+		Str:      v,
+		Exported: true,
+	}
+}
+
+func (lookupEnv) Each(fn func(name string, vr expand.Variable) bool) {
+	for _, kv := range os.Environ() {
+		name, value, ok := strings.Cut(kv, "=")
+		if !ok {
+			continue
+		}
+		if !fn(name, expand.Variable{
+			Kind:     expand.String,
+			Str:      value,
+			Exported: true,
+		}) {
+			return
+		}
+	}
+}
 
 // Recorder is a shell Interpreter that captures a command transcript
 // into the Transcript byte buffer.
@@ -34,6 +71,15 @@ type Recorder struct {
 func (rec *Recorder) Init() error {
 	var err error
 	rec.runner, err = interp.New(
+		interp.Env(lookupEnv{}),
+		interp.ExecHandlers(func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {
+			return func(ctx context.Context, args []string) error {
+				if len(args) > 0 && args[0] == "dep" {
+					return runDepIntrinsic(ctx, args[1:])
+				}
+				return next(ctx, args)
+			}
+		}),
 		interp.StdIO(nil,
 			io.MultiWriter(&rec.stdoutBuf, orDiscard(rec.Stdout)),
 			io.MultiWriter(&rec.stderrBuf, orDiscard(rec.Stderr)),
@@ -171,6 +217,28 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandRe
 		return nil, runErr
 	}
 	return &res, nil
+}
+
+func (rec *Recorder) RunDepDirective(ctx context.Context, payload string) error {
+	stmt, err := parseStmt("dep " + payload)
+	if err != nil {
+		return fmt.Errorf("parsing: %w", err)
+	}
+	if err := validateDepStmt(stmt); err != nil {
+		return err
+	}
+	runErr := rec.runner.Run(ctx, stmt)
+	// The intrinsic should be silent. Discard any output to avoid polluting the
+	// next recorded command.
+	rec.stdoutBuf.Reset()
+	rec.stderrBuf.Reset()
+	if runErr != nil {
+		if status, ok := interp.IsExitStatus(runErr); ok {
+			return fmt.Errorf("dep exited with status %d", status)
+		}
+		return runErr
+	}
+	return nil
 }
 
 func (rec *Recorder) RecordComment(text string) {

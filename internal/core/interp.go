@@ -51,6 +51,13 @@ type Handler interface {
 	// Corresponds to cmdt syntax: "% no-newline".
 	HandleNoNewline(ctx context.Context, fd int) error
 
+	// HandleDep declares external dependencies for caching/correctness purposes.
+	// The payload is interpreted as shell arguments/redirections to an intrinsic
+	// `dep` command (for example: `foo "$BAR" < deps.txt`).
+	//
+	// Corresponds to cmdt syntax: "% dep <shell-args...>".
+	HandleDep(ctx context.Context, payload string) error
+
 	// HandleExitCode processes the expected exit code of a command.
 	// If omitted in the transcript, the exit code defaults to 0.
 	// Corresponds to cmdt syntax: "? exitcode".
@@ -142,6 +149,12 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 				return t.syntaxErrorf("unexpected arguments")
 			}
 			return hdlr.HandleNoNewline(ctx, t.prevFD)
+
+		case "dep":
+			if strings.TrimSpace(payload) == "" {
+				return t.syntaxErrorf("usage: %% dep <shell-args...>")
+			}
+			return hdlr.HandleDep(ctx, payload)
 
 		default:
 			return t.syntaxErrorf("invalid directive: %q", directive)

@@ -88,6 +88,16 @@ func (upr *Updater) HandleNoNewline(ctx context.Context, fd int) error {
 	return nil
 }
 
+func (upr *Updater) HandleDep(ctx context.Context, payload string) error {
+	// Treat dependency directives like comments: keep them in the updated output,
+	// but do not interpret them.
+	if err := upr.flushCurrentCommand(ctx); err != nil {
+		return err
+	}
+	upr.rec.RecordComment(fmt.Sprintf("%% dep %s", payload))
+	return nil
+}
+
 func (upr *Updater) HandleExitCode(ctx context.Context, exitCode int) error {
 	// Exit codes are ignored in update mode, but flush the command now that we have all its output
 	return upr.flushCurrentCommand(ctx)
