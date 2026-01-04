@@ -60,23 +60,18 @@ Declare a set of dependencies from a depfile:
 Depfiles are line-oriented data files (no shell expansion). See
 `docs/reference.md` for the depfile format.
 
-### Generating A Depfile In The Transcript
+### Avoid Generating A Depfile In The Transcript
 
-Sometimes it's easiest to generate a depfile inside the transcript and then use
-it:
+It's tempting to generate a depfile during a transcript run and then declare it
+with `% dep < ...`, but don't do this if you care about `go test` caching.
 
-```text
-$ find . -name '*_test.ts' | sort > tests.deps
-% dep < tests.deps
+`% dep < deps.txt` necessarily opens `deps.txt` (because of the `<`
+redirection).
+If the depfile was just written or modified, Go's "open too new" cutoff can
+refuse to cache the package test result.
 
-$ mytool --inputs-from-file tests.deps
-1 ok
-```
-
-Note: `% dep < tests.deps` necessarily opens `tests.deps`. If you generate the
-depfile during the test run and you care about `go test` caching, this may trip
-Go's "open too new" cutoff and prevent caching. Prefer stable depfiles (checked
-in, or generated ahead of the test run).
+Prefer stable depfiles (checked in, or otherwise not rewritten on every test
+run) when caching matters.
 
 ## Best Practices
 

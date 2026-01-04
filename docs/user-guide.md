@@ -111,6 +111,11 @@ $ mytool --config config.json
 1 ok
 ```
 
+Note: `% dep < deps.txt` necessarily opens `deps.txt` in the test process. If
+the depfile is generated or modified during the `go test` run (or is otherwise
+freshly written), Go may refuse to cache the package test result. Prefer stable
+depfiles when caching matters.
+
 ### Practical Guidance
 
 - If your test setup rebuilds the tool-under-test on every `go test` run, Go's
