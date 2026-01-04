@@ -1,0 +1,7 @@
+$ printf 'ok\n' > expected-nl.txt
+$ cat expected-nl.txt
+1< expected-nl.txt
+
+$ printf 'ok' > expected-no-nl.txt
+$ cat expected-no-nl.txt
+1< expected-no-nl.txt

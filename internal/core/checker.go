@@ -83,7 +83,8 @@ func (ckr *checkHandler) HandleFileOutput(ctx context.Context, fd int, filepath 
 		if len(expectedData) > 0 && expectedData[len(expectedData)-1] != '\n' {
 			builder.WriteString("\n% no-newline\n")
 		}
-		return ckr.expectOutput(builder.String())
+		_, err := io.WriteString(&ckr.expectedOutput, builder.String())
+		return err
 	}
 }
 
