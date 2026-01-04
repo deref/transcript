@@ -1,12 +1,15 @@
-# Go `test` Cache Friendliness Plan (Remaining Work)
+# Plan (Remaining Work)
 
-All core hazards in this plan are now either fixed or documented with tests.
-This file tracks only the remaining follow-ups.
+This file tracks only the remaining follow-ups across the project.
+
+Most items below are specifically about `go test` caching, but this plan is not
+limited to caching work.
 
 ## Remaining
 
 - Optional: warn (non-fatal) when a declared `% dep` file path is outside the
   module root, since `go test` will ignore it for caching.
+
   - Decide warning surface area: CLI only, Go API only (`cmdtest.Check`), or
     both.
   - Decide how to find module root cheaply (likely: walk upward from the

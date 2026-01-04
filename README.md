@@ -1,17 +1,22 @@
 # Transcript
 
-`transcript` is a CLI tool for snapshot testing other CLI tools.
+`transcript` is a CLI tool for snapshot testing command-line programs.
 
-The snapshot files &mdash; called "transcripts" &mdash; are designed to be
-easily human-readable and reasonably human-writable, without sacrificing
-precise assertions about the behavior of the tool under test. In practice,
-most transcripts can be authored interactively and maintained in an automated
-way.
+Tests are written in a small, line-oriented format (usually `*.cmdt`) that
+captures a shell session: commands, stdout/stderr, and exit codes. The format
+is designed to be readable in reviews and easy to update when outputs change.
 
-# Usage
+## Highlights
 
-Automatically record a shell session or type-out a transcript file by hand,
-then use the `check` command!
+- Record sessions interactively (`transcript shell`)
+- Check transcripts in CI (`transcript check`)
+- Update expectations when outputs change (`transcript update`)
+- Reference external files for large or binary output (`1<` / `2<`)
+- Embed transcripts in Go tests via `cmdtest.Check`
+
+## Quick Start
+
+Create a transcript and check it:
 
 ```bash
 cat > demo.cmdt <<EOF
@@ -32,274 +37,15 @@ transcript check ./demo.cmdt
 ## Install
 
 ```bash
-go get -u github.com/deref/transcript
+go install github.com/deref/transcript@latest
 ```
 
-NOTE: Transcript is not Go-specific. It is simply written in Go and Go provides
-a convenient distribution mechanism. If there is expressed interest, it may be
-re-packaged for various additional distribution channels.
+Transcript is not Go-specific, but it is written in Go and can be used in Go
+test suites via `cmdtest.Check`.
 
-## Record
+## Documentation
 
-Initial authoring of tests is performed in an interactive shell.
-
-To record an interactive session to a file, run:
-
-```bash
-transcript shell -o example.cmdt
-```
-
-The interactive shell supports standard readline behaviors and can be exited
-with `^d` or `exit` like most other shells.
-
-## Check
-
-To interpret a transcript file and validate that the results (stdio output and
-exit codes) have not changed, run the following:
-
-```bash
-transcript check example.cmdt
-```
-
-Check returns a non-zero exit code if any check failures or other errors occur.
-
-It is treated as an error if there are no files to check.
-
-## Update
-
-When the CLI tools under test are modified, the quickest way to update test
-files is to use the automated `update` process:
-
-```bash
-transcript update example.cmdt
-```
-
-This will interpret a command transcript file, but does not check any output or
-exit status expectations. Instead, the given file will be rewritten with the
-newly observed results.
-
-## Edit
-
-While transcript files can be edited by hand, more advanced edits can be made
-using an interactive update session. The experience should be familiar to users
-of `git rebase --interactive`.
-
-NOTE: Not yet implemented.
-
-# "Command Transcript" File Format
-
-Transcript files represent recorded shell sessions.
-
-`.cmdt` is the recommended file extension.
-
-This format is intended to be human-editable, but sacrifices some ease of
-hand-authoring in exchange for added functionality. Users are expected to
-primarily use the `transcript` tool to create and update transcripts.
-
-## Structure
-
-Cmdt files are line-oriented. Each line represents an instruction to the
-Transcript interpreter. Each instruction begins with an opcode, followed by a
-single space. The remainder of an instruction line forms arguments to the
-operation specified by the opcode.
-
-## Operations
-
-Operations with the following opcodes are supported:
-
-<dl>
-  <dt><code>#</code> &mdash; comment</dt>
-  <dd>
-    <p>
-      Comments may appear anywhere in a <code>.cmdt</code> file and are ignored
-      by the interpreter.
-    </p>
-    <p>A space is not required after the <code>#</code> opcode.</p>
-    <p>Blank lines are also treated as comments.</p>
-  </dd>
-
-  <dt><code>$</code> &mdash; command</dt>
-  <dd>
-    <p>Run a shell command.</p>
-    <p>
-      Supports the subset of Bash syntax provided by
-      <a href="https://github.com/mvdan/sh#gosh">mvdan/sh</a>.
-    </p>
-  </dd>
-
-  <dt><code>1</code>, <code>2</code> &mdash; output</dt>
-  <dd>
-    <p>
-      Match a line of output from a particular stdio stream of the previously
-      run command.
-    </p>
-    <p>
-      The opcodes are named after the file descriptors of stdout
-      (<code>1</code>) and stderr (<code>2</code>) respectively.
-    </p>
-    <p>
-      Output lines are matched exactly. More flexible matching may be
-      configured by <code>%</code> directives.
-    </p>
-    <p>
-      Transcript uses deterministic ordering: stderr first, then stdout.
-      True chronological interleaving cannot be preserved due to OS pipe
-      buffering. Programs requiring chronological order should redirect
-      stderr to stdout (e.g., <code>2>&1</code>).
-    </p>
-  </dd>
-
-  <dt><code>1&lt;</code>, <code>2&lt;</code> &mdash; file output</dt>
-  <dd>
-    <p>
-      Like <code>1</code> and <code>2</code>, but reference a file containing
-      the expected output instead of including it inline. File paths respect
-      the current working directory.
-    </p>
-  </dd>
-
-  <dt><code>?</code> &mdash; exit-code</dt>
-  <dd>
-    <p>Exit code of the previously run command.</p>
-    <p>If omitted, the exit code defaults to <code>0</code>.</p>
-  </dd>
-
-  <dt><code>%</code> &mdash; directive</dt>
-  <dd>
-    <p>Configures special behaviors in the Transcript interpreter.</p>
-    <p>Supported directives:</p>
-    <ul>
-      <li>
-        <code>no-newline</code> &mdash; Indicates that the last line of the
-        preceding output did not end with a newline character. Applies to either
-        stdout or stderr based on what's on the opcode of the previous line.
-      </li>
-      <li>
-        <code>dep &lt;shell-args...&gt;</code> &mdash; Declares dependencies for
-        the current transcript session (primarily for Go <code>test</code>
-        caching). The arguments are parsed/expanded by the transcript shell
-        runner (so quoting and env var expansion work), then interpreted by an
-        intrinsic <code>dep</code> command:
-        arguments starting with <code>$</code>
-        are treated as environment variable names (looked up by the test
-        process), and all other arguments are treated as file paths (stat'd by
-        the test process). You can also feed a depfile via stdin redirection,
-        e.g. <code>% dep &lt; deps.txt</code>.
-      </li>
-    </ul>
-  </dd>
-</dl>
-
-## Whitespace Handling
-
-Within the arguments of an operation, whitespace is significant. Opcodes are
-separated from their arguments by a single space. If there is more than one
-space, the additional spaces are part of the arguments. Similarly, trailing
-whitespace is part of the argument as well. This allows precise recording of
-the whitespace behavior of commands under test.
-
-If the arguments to an operation are completely empty, then the space after
-the opcode is optional. Such an extraneous space is discouraged, but not
-disallowed because text editors should preserve trailing whitespace in .cmdt
-files to support the precision mentioned above.
-
-Conventionally, command line tools always output a '\n' after each line,
-including the last line in a file. However, there are some situations where
-it is important to represent the lack of a trailing newline. In this case,
-the `% no-newline` directive signifies that the last line of the transcript
-is terminated with a synthetic newline. That is, the recorded output did not
-have a newline and the checker should strip the synthetic newline before
-checking against test output.
-
-## Working Directory
-
-Transcript inherits the working directory from the process that launches it.
-Directory changes (such as `cd` commands) persist throughout the transcript
-session, allowing tests to navigate and use relative paths consistently.
-
-## Binary Output
-
-Transcript automatically detects binary output using heuristics. Lines of plain
-text are recorded inline using the standard `1` and `2` opcodes, while spans of
-binary data are written to incrementally numbered files (`001.bin`, `002.bin`,
-etc.) and referenced using `1<` and `2<` opcodes. This applies to both shell
-recording and automatic updating.
-
-# Go API
-
-In addition to the `transcript` CLI, there is a Go API for users who wish to
-embed `cmdt` scripts in to their existing Go test suites.
-
-```go
-import (
-  _ "embed"
-
-  "github.com/deref/transcript/cmdtest"
-)
-
-//go:embed test.cmdt
-var fs embed.FS
-
-func TestCLI(t *testing.T) {
-  f, _ := fs.Open("test.cmdt")
-  defer f.Close()
-  cmdtest.Check(f)
-}
-```
-
-NOTE: Assuming that `./test.cmdt` uses the CLI tool you are developing, you
-must first build your tool and ensure it is on `PATH`.
-
-There is also a `CheckString` function for small, inline tests. However, prefer
-to use `.cmdt` files so that the `transcript` tool can assist with updates and
-edits.
-
-## Go test caching notes
-
-When `cmdtest.Check` runs inside `go test`, successful package test results may
-be reused from the Go test cache. The Go cache only “sees” dependencies that
-the <em>test process</em> itself consults (for example via `os.LookupEnv` and
-`os.Stat`). If your transcript runs subprocesses that read config files or
-other inputs, declare those inputs using `% dep ...` (and/or `% dep < deps.txt`
-for depfiles) so changes reliably invalidate the cache.
-
-Also note that `go test` intentionally ignores file dependencies outside the
-module root when computing cache keys. In practice that means:
-- Prefer putting the tool-under-test binary under your module (for example
-  `./bin/mytool`) and pointing `PATH` at it.
-- If the executable comes from `/usr/local/bin`, `$HOME/bin`, `/tmp`, etc,
-  changes to that executable will not invalidate the Go test cache.
-- `go test` can also refuse to cache runs that **open** very recently modified
-  files (“too new” mtime cutoff). Prefer `% dep` (stat-based) over patterns
-  that force opens (like `< file`) when you care about caching.
-
-### `% dep` semantics
-
-- **Relative paths:** file paths passed to `% dep` (and file paths read from
-  depfiles) are resolved relative to the transcript session working directory
-  (i.e., after any `cd` commands in the transcript).
-- **Best-effort:** missing files or unset environment variables do not fail the
-  transcript check by themselves; they exist primarily to inform `go test`
-  caching and hermeticity.
-- **No shell expansion in depfiles:** depfiles are parsed as data (line-based);
-  they do not perform shell expansion.
-
-### Depfile format
-
-Depfiles are line-oriented:
-- Blank lines are ignored.
-- Lines beginning with `#` are comments.
-- Lines beginning with `$` declare environment variable dependencies (the
-  remainder of the line is the variable name).
-- All other lines declare file path dependencies (the entire line is the file
-  path).
-
-Depfiles support a minimal escaping mechanism for rare cases:
-- `\\` for a literal backslash
-- `\$` for a literal leading `$` in a file path
-- `\n` for a literal newline character in a path/name
-
-# Editor Support
-
-Editor support (for syntax highlighting) is available for [several
-editors](./editors).
+- [User guide](docs/user-guide.md)
+- [File format reference](docs/reference.md)
+- [Go test caching notes](docs/test-cache.md)
+- [Editor support](editors/)
