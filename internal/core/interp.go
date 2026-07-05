@@ -22,6 +22,9 @@ type Interpreter struct {
 	// Private state.
 	acceptResults bool
 	prevFD        int // stdout (1), stderr (2) or none (0).
+
+	commandPending bool
+	commandLines   []string
 }
 
 // Handler provides callbacks for processing transcript operations.
@@ -86,6 +89,9 @@ func (t *Interpreter) ExecTranscript(ctx context.Context, r io.Reader) error {
 func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 	hdlr := t.Handler
 	if strings.TrimSpace(text) == "" || text[0] == '#' {
+		if err := t.runPendingCommand(ctx); err != nil {
+			return err
+		}
 		return hdlr.HandleComment(ctx, text)
 	}
 	parts := strings.SplitN(text, " ", 2)
@@ -99,12 +105,22 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 		if err := t.flushCommand(ctx); err != nil {
 			return err
 		}
-		t.Command = payload
 		t.CommandLineno = t.Lineno
-		t.acceptResults = true
-		return hdlr.HandleRun(ctx, payload)
+		t.commandPending = true
+		t.commandLines = []string{payload}
+		return nil
+
+	case ">":
+		if !t.commandPending {
+			return t.syntaxErrorf("unexpected command continuation")
+		}
+		t.commandLines = append(t.commandLines, payload)
+		return nil
 
 	case "1", "2":
+		if err := t.runPendingCommand(ctx); err != nil {
+			return err
+		}
 		if !t.acceptResults {
 			return t.syntaxErrorf("unexpected output check")
 		}
@@ -113,6 +129,9 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 		return hdlr.HandleOutput(ctx, fd, payload)
 
 	case "1<", "2<":
+		if err := t.runPendingCommand(ctx); err != nil {
+			return err
+		}
 		if !t.acceptResults {
 			return t.syntaxErrorf("unexpected file output check")
 		}
@@ -121,6 +140,9 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 		return hdlr.HandleFileOutput(ctx, fd, payload)
 
 	case "?":
+		if err := t.runPendingCommand(ctx); err != nil {
+			return err
+		}
 		if !t.acceptResults {
 			return t.syntaxErrorf("unexpected exit status check")
 		}
@@ -133,6 +155,9 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 		return err
 
 	case "%":
+		if err := t.runPendingCommand(ctx); err != nil {
+			return err
+		}
 		parts := strings.SplitN(payload, " ", 2)
 		directive := parts[0]
 		var payload string
@@ -165,9 +190,23 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 	}
 }
 
+func (t *Interpreter) runPendingCommand(ctx context.Context) error {
+	if !t.commandPending {
+		return nil
+	}
+	t.Command = strings.Join(t.commandLines, "\n")
+	t.commandPending = false
+	t.commandLines = nil
+	t.acceptResults = true
+	return t.Handler.HandleRun(ctx, t.Command)
+}
+
 func (t *Interpreter) flushCommand(ctx context.Context) error {
 	if t.CommandLineno == 0 {
 		return nil
+	}
+	if err := t.runPendingCommand(ctx); err != nil {
+		return err
 	}
 	t.prevFD = 0
 	return t.Handler.HandleEnd(ctx)

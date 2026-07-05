@@ -1,0 +1,7 @@
+$ cat > fixture.txt <<'EOF'
+> alpha
+> beta
+> EOF
+
+$ cat fixture.txt
+1 stale

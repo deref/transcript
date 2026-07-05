@@ -1,0 +1,38 @@
+# Multiline heredoc commands should use explicit continuation opcodes.
+$ cat > fixture.txt <<'EOF'
+> alpha
+> beta
+> # This is fixture data, not a transcript comment.
+> $ This is fixture data, not a transcript command.
+> 1 This is fixture data, not expected output.
+> EOF
+
+$ cat fixture.txt
+1 alpha
+1 beta
+1 # This is fixture data, not a transcript comment.
+1 $ This is fixture data, not a transcript command.
+1 1 This is fixture data, not expected output.
+
+# Multiline quoted strings.
+$ printf '%s' 'line one
+> line two
+> '
+1 line one
+1 line two
+
+# Multiline shell blocks.
+$ if true; then
+> echo selected
+> fi
+1 selected
+
+# Multiple heredocs in one command should consume their bodies in shell order.
+$ cat > left.txt <<'LEFT' && cat > right.txt <<'RIGHT'
+> left value
+> LEFT
+> right value
+> RIGHT
+
+$ paste -d / left.txt right.txt
+1 left value/right value
