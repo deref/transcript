@@ -20,6 +20,26 @@ Run a shell command. Commands are interpreted by `mvdan.cc/sh` (a bash-like
 shell in Go), so quoting, parameter expansion, and redirections generally work
 as expected.
 
+If a command is incomplete according to the shell parser, following transcript
+lines are treated as part of the same command until the command is complete.
+Only the first line uses the `$` opcode:
+
+```cmdt
+$ cat > fixture.txt <<'EOF'
+alpha
+beta
+EOF
+
+$ cat fixture.txt
+1 alpha
+1 beta
+```
+
+This supports shell forms such as heredocs, multiline quoted strings, and
+multiline shell blocks. Lines inside an incomplete command are raw shell text,
+even if they begin with transcript opcodes such as `$`, `1`, `2`, `%`, `?`, or
+`#`.
+
 ### `1` / `2` output
 
 Match an output line from the previous command:

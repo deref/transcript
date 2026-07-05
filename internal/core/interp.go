@@ -3,10 +3,13 @@ package core
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
+
+	"mvdan.cc/sh/v3/syntax"
 )
 
 // Interprets a transcript file.
@@ -22,6 +25,9 @@ type Interpreter struct {
 	// Private state.
 	acceptResults bool
 	prevFD        int // stdout (1), stderr (2) or none (0).
+
+	pendingCommandLineno int
+	pendingCommandLines  []string
 }
 
 // Handler provides callbacks for processing transcript operations.
@@ -79,12 +85,18 @@ func (t *Interpreter) ExecTranscript(ctx context.Context, r io.Reader) error {
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("scanning: %w", err)
 	}
+	if t.pendingCommandLineno != 0 {
+		return t.syntaxErrorAtLinef(t.pendingCommandLineno, "unterminated command")
+	}
 
 	return t.flushCommand(ctx)
 }
 
 func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 	hdlr := t.Handler
+	if t.pendingCommandLineno != 0 {
+		return t.appendCommandLine(ctx, text)
+	}
 	if strings.TrimSpace(text) == "" || text[0] == '#' {
 		return hdlr.HandleComment(ctx, text)
 	}
@@ -99,10 +111,7 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 		if err := t.flushCommand(ctx); err != nil {
 			return err
 		}
-		t.Command = payload
-		t.CommandLineno = t.Lineno
-		t.acceptResults = true
-		return hdlr.HandleRun(ctx, payload)
+		return t.startCommand(ctx, payload)
 
 	case "1", "2":
 		if !t.acceptResults {
@@ -165,6 +174,40 @@ func (t *Interpreter) ExecLine(ctx context.Context, text string) error {
 	}
 }
 
+func (t *Interpreter) startCommand(ctx context.Context, command string) error {
+	t.pendingCommandLineno = t.Lineno
+	t.pendingCommandLines = []string{command}
+	return t.finishCommandIfComplete(ctx)
+}
+
+func (t *Interpreter) appendCommandLine(ctx context.Context, text string) error {
+	t.pendingCommandLines = append(t.pendingCommandLines, text)
+	return t.finishCommandIfComplete(ctx)
+}
+
+func (t *Interpreter) finishCommandIfComplete(ctx context.Context) error {
+	command := strings.Join(t.pendingCommandLines, "\n")
+	if commandIncomplete(command) {
+		return nil
+	}
+
+	t.Command = command
+	t.CommandLineno = t.pendingCommandLineno
+	t.acceptResults = true
+	t.pendingCommandLineno = 0
+	t.pendingCommandLines = nil
+	return t.Handler.HandleRun(ctx, command)
+}
+
+func commandIncomplete(command string) bool {
+	_, err := parseStmt(command)
+	if syntax.IsIncomplete(err) {
+		return true
+	}
+	var parseErr syntax.ParseError
+	return errors.As(err, &parseErr) && strings.HasPrefix(parseErr.Text, "unclosed here-document ")
+}
+
 func (t *Interpreter) flushCommand(ctx context.Context) error {
 	if t.CommandLineno == 0 {
 		return nil
@@ -175,4 +218,8 @@ func (t *Interpreter) flushCommand(ctx context.Context) error {
 
 func (t *Interpreter) syntaxErrorf(message string, v ...any) error {
 	return fmt.Errorf("syntax error on line %d: "+message, append([]any{t.Lineno}, v...)...)
+}
+
+func (t *Interpreter) syntaxErrorAtLinef(lineno int, message string, v ...any) error {
+	return fmt.Errorf("syntax error on line %d: "+message, append([]any{lineno}, v...)...)
 }

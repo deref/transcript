@@ -1,0 +1,11 @@
+# Update should preserve multiline command blocks while refreshing assertions.
+
+$ transcript update --dry-run source.cmdt
+1 $ cat > fixture.txt <<'EOF'
+1 alpha
+1 beta
+1 EOF
+1 
+1 $ cat fixture.txt
+1 1 alpha
+1 1 beta
