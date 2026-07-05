@@ -36,8 +36,7 @@ $ cat fixture.txt
 1 beta
 ```
 
-Continuation payloads are raw shell text, even if they begin with transcript
-opcodes such as `$`, `1`, `2`, `%`, `?`, or `#`.
+Continuation payloads are raw shell text.
 
 ### `1` / `2` output
 

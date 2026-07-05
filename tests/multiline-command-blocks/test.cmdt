@@ -14,14 +14,14 @@ $ cat fixture.txt
 1 $ This is fixture data, not a transcript command.
 1 1 This is fixture data, not expected output.
 
-# Multiline quoted strings should use explicit continuation opcodes.
+# Multiline quoted strings.
 $ printf '%s' 'line one
 > line two
 > '
 1 line one
 1 line two
 
-# Multiline shell blocks should use explicit continuation opcodes.
+# Multiline shell blocks.
 $ if true; then
 > echo selected
 > fi

@@ -66,8 +66,8 @@ If output is large, or if the output is binary, transcripts can reference an
 external file via `1<`/`2<`. `transcript update` will automatically create
 numbered `*.bin` files for binary output.
 
-Commands may also use shell heredocs to create readable multiline fixtures.
-Use `>` continuation lines for the heredoc body:
+Commands may be multiline, such as when using shell heredocs to create
+readable fixtures. Use `>` continuation lines after the first command line:
 
 ```cmdt
 $ cat > config.txt <<'EOF'
