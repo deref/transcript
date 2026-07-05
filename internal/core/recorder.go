@@ -188,7 +188,7 @@ func (rec *Recorder) RunCommand(ctx context.Context, command string) (*CommandRe
 		fmt.Fprintln(&rec.Transcript)
 		rec.needsBlank = false
 	}
-	fmt.Fprintf(&rec.Transcript, "$ %s\n", command)
+	rec.recordCommand(command)
 	afterCommandMark := rec.Transcript.Len()
 
 	// Execute command and record output.
@@ -244,6 +244,18 @@ func (rec *Recorder) RunDepDirective(ctx context.Context, payload string) error 
 func (rec *Recorder) RecordComment(text string) {
 	fmt.Fprintln(&rec.Transcript, text)
 	rec.needsBlank = false
+}
+
+func (rec *Recorder) recordCommand(command string) {
+	lines := strings.Split(command, "\n")
+	fmt.Fprintf(&rec.Transcript, "$ %s\n", lines[0])
+	for _, line := range lines[1:] {
+		if line == "" {
+			fmt.Fprintln(&rec.Transcript, ">")
+		} else {
+			fmt.Fprintf(&rec.Transcript, "> %s\n", line)
+		}
+	}
 }
 
 func (rec *Recorder) Exited() bool {

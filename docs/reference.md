@@ -20,6 +20,25 @@ Run a shell command. Commands are interpreted by `mvdan.cc/sh` (a bash-like
 shell in Go), so quoting, parameter expansion, and redirections generally work
 as expected.
 
+### `>` command continuation
+
+Continue the previous command. Continuation lines are appended to the command
+with newline separators before the command is run:
+
+```cmdt
+$ cat > fixture.txt <<'EOF'
+> alpha
+> beta
+> EOF
+
+$ cat fixture.txt
+1 alpha
+1 beta
+```
+
+Continuation payloads are raw shell text, even if they begin with transcript
+opcodes such as `$`, `1`, `2`, `%`, `?`, or `#`.
+
 ### `1` / `2` output
 
 Match an output line from the previous command:

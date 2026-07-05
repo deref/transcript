@@ -66,6 +66,19 @@ If output is large, or if the output is binary, transcripts can reference an
 external file via `1<`/`2<`. `transcript update` will automatically create
 numbered `*.bin` files for binary output.
 
+Commands may also use shell heredocs to create readable multiline fixtures.
+Use `>` continuation lines for the heredoc body:
+
+```cmdt
+$ cat > config.txt <<'EOF'
+> name = "example"
+> enabled = true
+> EOF
+
+$ mytool config.txt
+1 loaded example
+```
+
 ## Go Tests
 
 You can embed `*.cmdt` scripts in Go tests:
