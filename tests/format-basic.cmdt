@@ -1,0 +1,14 @@
+# Test basic formatting
+
+$ echo hello
+1 hello
+
+# Multiple blank lines should be normalized
+
+
+$ echo world 
+1 world
+
+   # Comment with irregular spacing
+$ false
+? 1
